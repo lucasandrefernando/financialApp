@@ -1,0 +1,356 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================== VARIÁVEIS CUSTOMIZADAS ===================== */
+@layer base {
+  :root {
+    /* Cores Primárias */
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
+
+    /* Cores Secundárias */
+    --color-secondary-50: #faf5ff;
+    --color-secondary-100: #f3e8ff;
+    --color-secondary-500: #8b5cf6;
+    --color-secondary-600: #7c3aed;
+
+    /* Cores de Status */
+    --color-success-50: #f0fdf4;
+    --color-success-100: #dcfce7;
+    --color-success-500: #10b981;
+    --color-success-600: #059669;
+
+    --color-error-50: #fef2f2;
+    --color-error-100: #fee2e2;
+    --color-error-500: #ef4444;
+    --color-error-600: #dc2626;
+
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+
+    --color-info-50: #f0f9ff;
+    --color-info-100: #e0f2fe;
+    --color-info-500: #06b6d4;
+    --color-info-600: #0891b2;
+
+    /* Neutral Colors */
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
+
+    /* Animação */
+    --animation-duration: 300ms;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* Reset global */
+  * {
+    @apply border-slate-200 dark:border-slate-700;
+  }
+
+  body {
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+  }
+}
+
+/* ===================== UTILITÁRIOS CUSTOMIZADOS ===================== */
+@layer components {
+  /* Shadow Customizado - FAB (Floating Action Button) */
+  .shadow-fab {
+    @apply shadow-[0_4px_12px_rgba(59,130,246,0.3)];
+  }
+
+  .dark .shadow-fab {
+    @apply shadow-[0_4px_12px_rgba(59,130,246,0.4)];
+  }
+
+  /* Scrollbar Customizado */
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-500;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    @apply backdrop-blur-md bg-white/80 dark:bg-slate-800/80;
+  }
+
+  /* Text truncate com múltiplas linhas */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Flex center */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  /* Grid center */
+  .grid-center {
+    @apply grid place-items-center;
+  }
+
+  /* Transição suave */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Focus ring customizado */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+  }
+
+  .dark .focus-ring {
+    @apply focus:ring-offset-slate-900;
+  }
+}
+
+/* ===================== ANIMAÇÕES CUSTOMIZADAS ===================== */
+@layer keyframes {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-soft {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    @apply animate-[fadeIn_300ms_ease-in-out];
+  }
+
+  .animate-slideInUp {
+    @apply animate-[slideInUp_300ms_ease-out];
+  }
+
+  .animate-slideInDown {
+    @apply animate-[slideInDown_300ms_ease-out];
+  }
+
+  .animate-slideInLeft {
+    @apply animate-[slideInLeft_300ms_ease-out];
+  }
+
+  .animate-slideInRight {
+    @apply animate-[slideInRight_300ms_ease-out];
+  }
+
+  .animate-pulse-soft {
+    @apply animate-[pulse-soft_2s_ease-in-out_infinite];
+  }
+
+  .animate-shimmer {
+    @apply animate-[shimmer_2s_ease-in-out_infinite];
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    background-size: 1000px 100%;
+  }
+}
+
+/* ===================== ESTADOS DE LOADING ===================== */
+.skeleton {
+  @apply bg-slate-200 dark:bg-slate-700 animate-pulse rounded;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-full;
+}
+
+.skeleton-avatar {
+  @apply skeleton h-10 w-10 rounded-full;
+}
+
+/* ===================== RESPONSIVIDADE ===================== */
+/* Mobile first approach - todos os estilos padrão são mobile */
+
+/* Tablet (768px) */
+@media (min-width: 768px) {
+  body {
+    @apply text-base;
+  }
+}
+
+/* Desktop (1024px) */
+@media (min-width: 1024px) {
+  body {
+    @apply text-base;
+  }
+}
+
+/* Wide (1280px) */
+@media (min-width: 1280px) {
+  body {
+    @apply text-base;
+  }
+}
+
+/* ===================== ACESSIBILIDADE ===================== */
+/* Modo foco para navegação por teclado */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Preferência de tema clara/escura */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* ===================== FORMS ===================== */
+input[type='email']:autofill,
+input[type='password']:autofill,
+input[type='text']:autofill {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-text-fill-color: #1e293b;
+}
+
+input[type='email']:autofill:focus,
+input[type='password']:autofill:focus,
+input[type='text']:autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-text-fill-color: #1e293b;
+}
+
+html.dark input[type='email']:autofill,
+html.dark input[type='password']:autofill,
+html.dark input[type='text']:autofill {
+  -webkit-box-shadow: 0 0 0 1000px #1e293b inset;
+  -webkit-text-fill-color: #f1f5f9;
+}
+
+html.dark input[type='email']:autofill:focus,
+html.dark input[type='password']:autofill:focus,
+html.dark input[type='text']:autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #1e293b inset;
+  -webkit-text-fill-color: #f1f5f9;
+}
