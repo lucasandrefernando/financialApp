@@ -62,17 +62,6 @@ interface AccountFormProps {
   onClose: () => void
 }
 
-async function createAccount(data: object) {
-  const { data: result, error } = await (supabase.from('accounts') as any).insert(data).select().single()
-  if (error) throw error
-  return result
-}
-
-async function updateAccount(data: any) {
-  const { data: result, error } = await (supabase.from('accounts') as any).update(data).eq('id', data.id).select().single()
-  if (error) throw error
-  return result
-}
 
 export function AccountForm({ account, onClose }: AccountFormProps) {
   const user = useAuthStore((state) => state.user)
