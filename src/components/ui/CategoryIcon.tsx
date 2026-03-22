@@ -5,7 +5,6 @@ import {
   TrendingUp, Gift, MoreHorizontal, DollarSign,
   Banknote, PiggyBank, Plane, Coffee, Dumbbell,
   Shirt, Tv, Phone, Globe, Package, Star,
-  ArrowUpCircle, ArrowDownCircle, ArrowLeftRight,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -63,8 +62,8 @@ const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   'star': Star,
 }
 
-interface CategoryIconProps extends LucideProps {
-  name: string | null | undefined
+interface CategoryIconProps extends Omit<LucideProps, 'name'> {
+  name?: string | null
   fallback?: React.ComponentType<LucideProps>
 }
 

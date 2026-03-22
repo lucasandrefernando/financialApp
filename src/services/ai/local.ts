@@ -8,7 +8,6 @@ import type { AIClient } from './index'
 
 export class LocalAIClient implements AIClient {
   private cache: Map<string, { response: string; timestamp: number }> = new Map()
-  private cacheTTL: number = 3600
 
   constructor() {
     console.warn('⚠️ Using Local AI categorization (fallback mode)')
@@ -19,7 +18,7 @@ export class LocalAIClient implements AIClient {
    */
   async categorizeTransaction(
     description: string,
-    amount: number,
+    _amount: number,
     categories: string[]
   ): Promise<{ category: string; confidence: number; reasoning: string }> {
     const lowerDesc = description.toLowerCase()
@@ -75,7 +74,7 @@ export class LocalAIClient implements AIClient {
    */
   async generateInsights(
     transactions: Array<{ description: string; amount: number; category: string }>,
-    budget?: Record<string, number>
+    _budget?: Record<string, number>
   ): Promise<string> {
     if (!transactions || transactions.length === 0) {
       return 'Sem transações para análise.'
@@ -153,9 +152,6 @@ export class LocalAIClient implements AIClient {
     }
   }
 
-  private getCacheKey(prompt: string): string {
-    return `local_${prompt.substring(0, 50)}`
-  }
 }
 
 export const localAIClient = new LocalAIClient()
