@@ -1,4 +1,5 @@
 import { supabase } from '@/services/supabase'
+import { recalculateAccountBalances } from '@/services/api/accounts'
 import type { RecentTransaction, Transaction, MonthlySummary, Database } from '@/types/database'
 import type { TransactionType, TransactionStatus } from '@/types/database'
 
@@ -56,8 +57,8 @@ export async function fetchTransactionById(id: string) {
 
 export async function createTransaction(payload: TransactionInsert) {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Usuário não autenticado')
-  
+  if (!user) throw new Error('Usuario nao autenticado')
+
   const { data, error } = await (supabase
     .from('transactions') as AnyTable)
     .insert({ ...payload, user_id: user.id })
@@ -67,10 +68,19 @@ export async function createTransaction(payload: TransactionInsert) {
     console.error('Supabase createTransaction error:', JSON.stringify(error))
     throw error
   }
+
+  await recalculateAccountBalances([data.account_id, data.destination_account_id])
   return data as Transaction
 }
 
 export async function updateTransaction(id: string, payload: TransactionUpdate) {
+  const { data: before, error: beforeError } = await (supabase
+    .from('transactions') as AnyTable)
+    .select('account_id, destination_account_id')
+    .eq('id', id)
+    .single()
+  if (beforeError) throw beforeError
+
   const { data, error } = await (supabase
     .from('transactions') as AnyTable)
     .update(payload)
@@ -78,15 +88,32 @@ export async function updateTransaction(id: string, payload: TransactionUpdate) 
     .select()
     .single()
   if (error) throw error
+
+  await recalculateAccountBalances([
+    before?.account_id,
+    before?.destination_account_id,
+    data.account_id,
+    data.destination_account_id,
+  ])
+
   return data as Transaction
 }
 
 export async function deleteTransaction(id: string) {
+  const { data: before, error: beforeError } = await (supabase
+    .from('transactions') as AnyTable)
+    .select('account_id, destination_account_id')
+    .eq('id', id)
+    .single()
+  if (beforeError) throw beforeError
+
   const { error } = await (supabase
     .from('transactions') as AnyTable)
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
+
+  await recalculateAccountBalances([before?.account_id, before?.destination_account_id])
 }
 
 export async function fetchMonthlySummary(year: number, month: number): Promise<MonthlySummary> {
@@ -106,20 +133,19 @@ export async function fetchMonthlySummary(year: number, month: number): Promise<
   const rows = (data ?? []) as { type: string; amount: number; category_name: string | null }[]
 
   const total_income = rows
-    .filter(r => r.type === 'income')
+    .filter((r) => r.type === 'income')
     .reduce((s, r) => s + Number(r.amount), 0)
 
   const total_expense = rows
-    .filter(r => r.type === 'expense')
+    .filter((r) => r.type === 'expense')
     .reduce((s, r) => s + Number(r.amount), 0)
 
   const net_balance = total_income - total_expense
   const transaction_count = rows.length
   const savings_rate = total_income > 0 ? ((total_income - total_expense) / total_income) * 100 : 0
 
-  // categoria com mais gasto
   const categoryTotals: Record<string, number> = {}
-  rows.filter(r => r.type === 'expense').forEach(r => {
+  rows.filter((r) => r.type === 'expense').forEach((r) => {
     const cat = r.category_name ?? 'Outros'
     categoryTotals[cat] = (categoryTotals[cat] ?? 0) + Number(r.amount)
   })

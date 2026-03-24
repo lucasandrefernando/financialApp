@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast'
 import { Search, ChevronDown, X } from 'lucide-react'
 import type { Account } from '@/types/database'
 import { useEffect } from 'react'
+import { recalculateAccountBalances } from '@/services/api/accounts'
 
 // ─── Bancos brasileiros ───────────────────────────────────────────────────────
 const BANKS = [
@@ -112,25 +113,29 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         color: data.color,
         notes: data.notes,
         include_in_sum: data.include_in_sum,
-        user_id: user.id,
-        icon: 'wallet',
-        is_active: true,
-        initial_balance: 0,
-        balance: 0,
       }
 
       if (isEditing) {
         const { error } = await (supabase.from('accounts') as any).update(payload).eq('id', account!.id)
         if (error) throw error
       } else {
+        const createPayload = {
+          ...payload,
+          user_id: user.id,
+          icon: 'wallet',
+          is_active: true,
+          initial_balance: 0,
+          balance: 0,
+        }
+
         // Cria conta com saldo zero
         const { data: created, error } = await (supabase.from('accounts') as any)
-          .insert(payload).select().single()
+          .insert(createPayload).select().single()
         if (error) throw error
 
         // Se informou saldo inicial, cria transação de receita automática
         if (data.initial_amount && data.initial_amount > 0) {
-          await (supabase.from('transactions') as any).insert({
+          const { error: txError } = await (supabase.from('transactions') as any).insert({
             user_id: user.id,
             account_id: created.id,
             type: 'income',
@@ -143,6 +148,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
             attachments: [],
             metadata: {},
           })
+          if (txError) throw txError
+          await recalculateAccountBalances([created.id])
         }
       }
     },
