@@ -1,11 +1,11 @@
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
-import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 3000
+const PUBLIC_DIR = path.join(__dirname, 'public')
 const DIST_DIR = path.join(__dirname, 'dist')
 const BASE_PATH = normalizeBasePath(
   process.env.APP_BASE_PATH ||
@@ -43,9 +43,9 @@ function sendNotFound(res) {
   res.end('Not found')
 }
 
-function sendBuildMissing(res) {
+function sendStaticMissing(res) {
   res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' })
-  res.end('Build ausente. Execute "npm run build" para gerar a pasta dist.')
+  res.end('Arquivos estaticos ausentes. Gere e publique o build da aplicacao.')
 }
 
 function fileExists(filePath) {
@@ -64,27 +64,20 @@ function streamFile(filePath, res) {
   fs.createReadStream(filePath).pipe(res)
 }
 
-function ensureBuildExists() {
-  const spaIndex = path.join(DIST_DIR, 'index.html')
-  if (fileExists(spaIndex)) return true
-
-  console.log('Pasta dist ausente. Executando build automaticamente...')
-  try {
-    execSync('npm run build', { cwd: __dirname, stdio: 'inherit' })
-    return fileExists(spaIndex)
-  } catch {
-    return false
-  }
+function resolveStaticDir() {
+  if (fileExists(path.join(PUBLIC_DIR, 'index.html'))) return PUBLIC_DIR
+  if (fileExists(path.join(DIST_DIR, 'index.html'))) return DIST_DIR
+  return null
 }
 
-const buildReady = ensureBuildExists()
+const STATIC_DIR = resolveStaticDir()
 
 const server = http.createServer((req, res) => {
-  if (!buildReady) {
-    sendBuildMissing(res)
+  if (!STATIC_DIR) {
+    sendStaticMissing(res)
     return
   }
-  const spaIndex = path.join(DIST_DIR, 'index.html')
+  const spaIndex = path.join(STATIC_DIR, 'index.html')
 
   if (!req.url) {
     sendNotFound(res)
@@ -104,7 +97,7 @@ const server = http.createServer((req, res) => {
 
   const cleanLocalPath = localPath.replace(/^\/+/, '')
   const safePath = path.normalize(cleanLocalPath).replace(/^(\.\.[/\\])+/, '')
-  const requestedFile = path.join(DIST_DIR, safePath)
+  const requestedFile = path.join(STATIC_DIR, safePath)
 
   if (safePath && fileExists(requestedFile)) {
     streamFile(requestedFile, res)
@@ -122,4 +115,5 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Financial App rodando na porta ${PORT}`)
   console.log(`Base path configurada: ${BASE_PATH}`)
+  console.log(`Diretorio estatico: ${STATIC_DIR || 'nao encontrado'}`)
 })

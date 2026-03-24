@@ -6,7 +6,6 @@ on:
       - main
     paths-ignore:
       - 'public/**'
-      - 'server.js'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -34,6 +33,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+          VITE_APP_BASE_PATH: /financialApp/
         run: npm run build
 
       - name: Commit built files to main
