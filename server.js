@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 21149
 const PUBLIC_DIR = path.join(__dirname, 'public')
 const DIST_DIR = path.join(__dirname, 'dist')
 const BASE_PATH = normalizeBasePath(
