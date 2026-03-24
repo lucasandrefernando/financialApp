@@ -67,3 +67,25 @@ src/
 â”œâ”€â”€ types/          # Tipos TypeScript
 â””â”€â”€ utils/          # UtilitÃ¡rios
 ```
+
+## Deploy na KingHost (Node.js + Git)
+
+1. Gere o build para subpasta da aplicação:
+
+```bash
+# Windows PowerShell
+$env:VITE_APP_BASE_PATH="/financialApp/"
+npm run build
+```
+
+2. Publique no GitHub e confirme que a pasta `dist/` existe no servidor da KingHost.
+
+3. No painel Node.js da KingHost, use:
+- Caminho da aplicação: `/financialApp`
+- Script: `server.js` (ou `financialApp/server.js` se o painel exigir caminho completo relativo)
+- Acesso Web: `SIM`
+- SSL: `SIM` (se o certificado já estiver instalado)
+
+4. Variáveis de ambiente recomendadas:
+- `APP_BASE_PATH=/financialApp`
+- `PORT` (deixe o painel gerenciar, quando aplicável)
