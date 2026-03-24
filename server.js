@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 21149
+const HOST = process.env.HOST || '0.0.0.0'
 const PUBLIC_DIR = path.join(__dirname, 'public')
 const DIST_DIR = path.join(__dirname, 'dist')
 const BASE_PATH = normalizeBasePath(
@@ -112,8 +113,8 @@ const server = http.createServer((req, res) => {
   sendNotFound(res)
 })
 
-server.listen(PORT, () => {
-  console.log(`Financial App rodando na porta ${PORT}`)
+server.listen(PORT, HOST, () => {
+  console.log(`Financial App rodando em ${HOST}:${PORT}`)
   console.log(`Base path configurada: ${BASE_PATH}`)
   console.log(`Diretorio estatico: ${STATIC_DIR || 'nao encontrado'}`)
 })
