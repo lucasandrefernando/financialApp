@@ -20,7 +20,10 @@ import onboardingRoutes from './backend/routes/onboarding.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
-const PORT = Number(process.env.PORT || 21149)
+const kinghostPortEntry = Object.entries(process.env).find(
+  ([key, value]) => key.startsWith('PORT_') && /^\d+$/.test(String(value || ''))
+)
+const PORT = Number(process.env.PORT || kinghostPortEntry?.[1] || 21149)
 const HOST = process.env.HOST || '0.0.0.0'
 const BASE_PATH = normalizeBasePath(
   process.env.APP_BASE_PATH ||
