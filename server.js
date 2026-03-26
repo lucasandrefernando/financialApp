@@ -35,6 +35,10 @@ const BASE_PATH = normalizeBasePath(
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 
+app.get('/health', (req, res) => {
+  res.json({ ok: true, app: 'financial-app', time: new Date().toISOString() })
+})
+
 function normalizeBasePath(value) {
   if (!value || value === '/') return '/'
   const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
