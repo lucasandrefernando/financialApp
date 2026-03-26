@@ -1,44 +1,28 @@
-import { supabase } from '@/services/supabase'
+import api from '../lib/api'
+import type { User } from '../types'
 
-export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw error
-  return data
+export async function login(email: string, password: string) {
+  const { data } = await api.post('/api/auth/login', { email, password })
+  localStorage.setItem('access_token', data.access_token)
+  localStorage.setItem('refresh_token', data.refresh_token)
+  return data.user as User
 }
 
-export async function signUp(email: string, password: string, fullName: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { full_name: fullName } },
-  })
-  if (error) throw error
-  return data
+export async function register(name: string, email: string, password: string) {
+  const { data } = await api.post('/api/auth/register', { name, email, password })
+  localStorage.setItem('access_token', data.access_token)
+  localStorage.setItem('refresh_token', data.refresh_token)
+  return data.user as User
 }
 
-export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+export async function getMe(): Promise<User> {
+  const { data } = await api.get('/api/auth/me')
+  return data as User
 }
 
-export async function resetPassword(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
-  })
-  if (error) throw error
-}
-
-export async function updatePassword(newPassword: string) {
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-  if (error) throw error
-}
-
-export async function getSession() {
-  const { data, error } = await supabase.auth.getSession()
-  if (error) throw error
-  return data.session
-}
-
-export function onAuthStateChange(callback: Parameters<typeof supabase.auth.onAuthStateChange>[0]) {
-  return supabase.auth.onAuthStateChange(callback)
+export async function logout() {
+  const refresh_token = localStorage.getItem('refresh_token')
+  await api.post('/api/auth/logout', { refresh_token }).catch(() => {})
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
 }

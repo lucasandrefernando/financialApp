@@ -1,81 +1,75 @@
-import { useState, createContext, useContext, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { clsx } from 'clsx'
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { CheckCircle, XCircle, X } from 'lucide-react'
+import { cn } from '../../lib/utils'
 
-type ToastType = 'success' | 'error' | 'warning' | 'info'
+type ToastType = 'success' | 'error'
 
-interface Toast {
-  id: string
-  type: ToastType
+interface ToastItem {
+  id: number
   message: string
-  duration?: number
+  type: ToastType
 }
 
-interface ToastContextValue {
-  toast: (type: ToastType, message: string, duration?: number) => void
-  success: (message: string) => void
-  error: (message: string) => void
-  warning: (message: string) => void
-  info: (message: string) => void
+let _toastId = 0
+const _listeners: ((items: ToastItem[]) => void)[] = []
+let _toasts: ToastItem[] = []
+
+function _notify(message: string, type: ToastType) {
+  const id = ++_toastId
+  _toasts = [..._toasts, { id, message, type }]
+  _listeners.forEach(fn => fn(_toasts))
+  setTimeout(() => {
+    _toasts = _toasts.filter(t => t.id !== id)
+    _listeners.forEach(fn => fn(_toasts))
+  }, 4000)
 }
 
-const ToastContext = createContext<ToastContextValue | null>(null)
-
-const icons = { success: CheckCircle, error: XCircle, warning: AlertTriangle, info: Info }
-const colors = {
-  success: 'border-l-4 border-success-500 bg-white dark:bg-slate-800',
-  error: 'border-l-4 border-error-500 bg-white dark:bg-slate-800',
-  warning: 'border-l-4 border-warning-500 bg-white dark:bg-slate-800',
-  info: 'border-l-4 border-info-500 bg-white dark:bg-slate-800',
+export const toast = {
+  success: (msg: string) => _notify(msg, 'success'),
+  error: (msg: string) => _notify(msg, 'error'),
 }
-const iconColors = { success: 'text-success-500', error: 'text-error-500', warning: 'text-warning-500', info: 'text-info-500' }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([])
+export function ToastContainer() {
+  const [items, setItems] = useState<ToastItem[]>([])
 
-  const remove = (id: string) => setToasts((t) => t.filter((x) => x.id !== id))
+  useEffect(() => {
+    _listeners.push(setItems)
+    return () => {
+      const i = _listeners.indexOf(setItems)
+      if (i > -1) _listeners.splice(i, 1)
+    }
+  }, [])
 
-  const toast = (type: ToastType, message: string, duration = type === 'error' ? 5000 : 3000) => {
-    const id = Math.random().toString(36).slice(2)
-    setToasts((t) => [...t.slice(-2), { id, type, message, duration }])
-    setTimeout(() => remove(id), duration)
-  }
-
-  const value: ToastContextValue = {
-    toast,
-    success: (m) => toast('success', m),
-    error: (m) => toast('error', m),
-    warning: (m) => toast('warning', m),
-    info: (m) => toast('info', m),
-  }
+  if (items.length === 0) return null
 
   return (
-    <ToastContext.Provider value={value}>
-      {children}
-      {createPortal(
-        <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-80" aria-live="polite">
-          {toasts.map((t) => {
-            const Icon = icons[t.type]
-            return (
-              <div key={t.id} className={clsx('flex items-start gap-3 p-4 rounded-[10px] shadow-card', colors[t.type])}>
-                <Icon size={18} className={clsx('flex-shrink-0 mt-0.5', iconColors[t.type])} />
-                <p className="text-sm text-slate-800 dark:text-slate-200 flex-1">{t.message}</p>
-                <button onClick={() => remove(t.id)} className="text-slate-400 hover:text-slate-600 flex-shrink-0" aria-label="Fechar">
-                  <X size={14} />
-                </button>
-              </div>
-            )
-          })}
-        </div>,
-        document.body
-      )}
-    </ToastContext.Provider>
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none">
+      {items.map(t => (
+        <div
+          key={t.id}
+          className={cn(
+            'flex items-center gap-3 p-4 rounded-xl shadow-lg border pointer-events-auto',
+            t.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          )}
+        >
+          {t.type === 'success'
+            ? <CheckCircle size={18} className="text-green-500 flex-shrink-0" />
+            : <XCircle size={18} className="text-red-500 flex-shrink-0" />
+          }
+          <p className="text-sm font-medium flex-1">{t.message}</p>
+          <button
+            onClick={() => {
+              _toasts = _toasts.filter(i => i.id !== t.id)
+              _listeners.forEach(fn => fn(_toasts))
+            }}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+    </div>
   )
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast deve ser usado dentro de ToastProvider')
-  return ctx
 }

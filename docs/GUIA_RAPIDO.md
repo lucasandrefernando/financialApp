@@ -1,6 +1,6 @@
-# 🎯 GUIA RÁPIDO - Como Rodar o Projeto
+# ðŸŽ¯ GUIA RÃPIDO - Como Rodar o Projeto
 
-## ⚡ Início Rápido (30 segundos)
+## âš¡ InÃ­cio RÃ¡pido (30 segundos)
 
 ```bash
 npm run dev
@@ -10,40 +10,40 @@ Pronto! Abra http://localhost:5173
 
 ---
 
-## 🔄 Fluxo de Funcionamento
+## ðŸ”„ Fluxo de Funcionamento
 
 ### Antes (Erro):
 ```
 Frontend (React)
-    ↓
+    â†“
 Tenta conectar em http://localhost:3000
-    ↓
-❌ ERR_CONNECTION_REFUSED (Backend não está rodando)
+    â†“
+âŒ ERR_CONNECTION_REFUSED (Backend nÃ£o estÃ¡ rodando)
 ```
 
 ### Depois (Funcionando):
 ```
 Frontend (React)
-    ↓
+    â†“
 Verifica VITE_USE_BACKEND
-    ↓
-Se false → Chama API Groq diretamente ✅
-Se true  → Chama Backend local ✅
+    â†“
+Se false â†’ Chama API Groq diretamente âœ…
+Se true  â†’ Chama Backend local âœ…
 ```
 
 ---
 
-## 📋 Checklist de Setup
+## ðŸ“‹ Checklist de Setup
 
 - [ ] Node.js instalado? (`node --version`)
-- [ ] Dependências instaladas? (`npm install`)
+- [ ] DependÃªncias instaladas? (`npm install`)
 - [ ] `.env.local` configurado? (Supabase + Groq keys)
 - [ ] Frontend rodando? (`npm run dev`)
 - [ ] Abrir http://localhost:5173
 
 ---
 
-## 🎮 Testando a Solução
+## ðŸŽ® Testando a SoluÃ§Ã£o
 
 ### Passo 1: Iniciar Frontend
 ```bash
@@ -52,34 +52,34 @@ npm run dev
 
 ### Passo 2: Abrir DevTools
 ```
-F12 → Console
+F12 â†’ Console
 ```
 
-### Passo 3: Adicionar Transação
+### Passo 3: Adicionar TransaÃ§Ã£o
 ```
-Dashboard → + → Preencher dados → Enviar
+Dashboard â†’ + â†’ Preencher dados â†’ Enviar
 ```
 
 ### Passo 4: Verificar Logs
 ```
 Deve aparecer:
-🤖 Chamando Groq API diretamente
-✅ Resposta recebida do Groq
+ðŸ¤– Chamando Groq API diretamente
+âœ… Resposta recebida do Groq
 ```
 
 ---
 
-## 🚀 Três Formas de Rodar
+## ðŸš€ TrÃªs Formas de Rodar
 
-### 1️⃣ Frontend Apenas (Recomendado)
+### 1ï¸âƒ£ Frontend Apenas (Recomendado)
 ```bash
 npm run dev
 ```
-- ✅ Mais rápido
-- ✅ Sem dependências
-- ✅ Ideal para desenvolvimento
+- âœ… Mais rÃ¡pido
+- âœ… Sem dependÃªncias
+- âœ… Ideal para desenvolvimento
 
-### 2️⃣ Frontend + Backend
+### 2ï¸âƒ£ Frontend + Backend
 ```bash
 # Terminal 1
 cd backend && npm run dev
@@ -87,11 +87,11 @@ cd backend && npm run dev
 # Terminal 2
 npm run dev
 ```
-- ✅ Mais seguro
-- ✅ Ideal para produção
-- ✅ Chave Groq protegida
+- âœ… Mais seguro
+- âœ… Ideal para produÃ§Ã£o
+- âœ… Chave Groq protegida
 
-### 3️⃣ Script Automático
+### 3ï¸âƒ£ Script AutomÃ¡tico
 ```bash
 # Windows
 start.bat
@@ -102,12 +102,12 @@ start.bat
 
 ---
 
-## 🔧 Configuração
+## ðŸ”§ ConfiguraÃ§Ã£o
 
-### `.env.local` - Modo API Direta (Padrão)
+### `.env.local` - Modo API Direta (PadrÃ£o)
 ```
 VITE_USE_BACKEND=false
-VITE_GROQ_API_KEY=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
+VITE_GROQ_API_KEY=gsk_SUA_CHAVE_AQUI
 ```
 
 ### `.env.local` - Modo Backend
@@ -118,52 +118,52 @@ VITE_BACKEND_URL=http://localhost:3000
 
 ---
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
-| Erro | Solução |
+| Erro | SoluÃ§Ã£o |
 |------|---------|
 | `ERR_CONNECTION_REFUSED` | Use `VITE_USE_BACKEND=false` |
-| `Chave API não configurada` | Adicione `VITE_GROQ_API_KEY` em `.env.local` |
-| `Insights não aparecem` | Adicione 3+ transações e recarregue |
-| `Sugestão de categoria não aparece` | Verifique console (F12) para erros |
+| `Chave API nÃ£o configurada` | Adicione `VITE_GROQ_API_KEY` em `.env.local` |
+| `Insights nÃ£o aparecem` | Adicione 3+ transaÃ§Ãµes e recarregue |
+| `SugestÃ£o de categoria nÃ£o aparece` | Verifique console (F12) para erros |
 
 ---
 
-## 📊 Arquitetura Atual
+## ðŸ“Š Arquitetura Atual
 
 ```
-┌─────────────────────────────────────┐
-│     Frontend (React + Vite)         │
-│  http://localhost:5173              │
-└────────────────┬────────────────────┘
-                 │
-         ┌───────┴────────┐
-         │                │
-    ┌────▼────┐      ┌────▼──────────┐
-    │ Groq    │      │ Backend       │
-    │ API     │      │ (Opcional)    │
-    │ Direta  │      │ Port 3000     │
-    └─────────┘      └───────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚     Frontend (React + Vite)         â”‚
+â”‚  http://localhost:5173              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                 â”‚
+         â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+         â”‚                â”‚
+    â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+    â”‚ Groq    â”‚      â”‚ Backend       â”‚
+    â”‚ API     â”‚      â”‚ (Opcional)    â”‚
+    â”‚ Direta  â”‚      â”‚ Port 3000     â”‚
+    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
 
-## ✅ Verificação Final
+## âœ… VerificaÃ§Ã£o Final
 
-Após rodar `npm run dev`, você deve ver:
+ApÃ³s rodar `npm run dev`, vocÃª deve ver:
 
 ```
-✓ built in 2.5s
+âœ“ built in 2.5s
 
-  ➜  Local:   http://localhost:5173/
-  ➜  press h to show help
+  âžœ  Local:   http://localhost:5173/
+  âžœ  press h to show help
 ```
 
-Se vir isso, está funcionando! 🎉
+Se vir isso, estÃ¡ funcionando! ðŸŽ‰
 
 ---
 
-## 📞 Precisa de Ajuda?
+## ðŸ“ž Precisa de Ajuda?
 
 1. **Leia:** `SOLUCAO_CONNECTION_REFUSED.md`
 2. **Verifique:** `SETUP_IA.md`
@@ -171,4 +171,4 @@ Se vir isso, está funcionando! 🎉
 
 ---
 
-**Tudo pronto! Bom desenvolvimento! 🚀**
+**Tudo pronto! Bom desenvolvimento! ðŸš€**

@@ -48,3 +48,7 @@ backend/node_modules
 
 # PM2
 .pm2/
+
+# Deploy artifacts
+deploy-manual-kinghost-*/
+deploy-manual-kinghost-*.zip

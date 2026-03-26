@@ -1,59 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTransactions, fetchTransactionById, createTransaction, updateTransaction, deleteTransaction, fetchRecentTransactions, fetchMonthlySummary, type TransactionFilters } from '@/services/api/transactions'
-import type { Transaction } from '@/types/database'
+import { transactionsService } from '../../services/transactions'
 
-export const transactionKeys = {
-  all: ['transactions'] as const,
-  list: (filters?: TransactionFilters) => [...transactionKeys.all, 'list', filters] as const,
-  detail: (id: string) => [...transactionKeys.all, 'detail', id] as const,
-  recent: (limit?: number) => [...transactionKeys.all, 'recent', limit] as const,
-  summary: (year: number, month: number) => [...transactionKeys.all, 'summary', year, month] as const,
-}
-
-function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
-  qc.invalidateQueries({ queryKey: transactionKeys.all })
-  qc.invalidateQueries({ queryKey: ['accounts'] })
-  qc.invalidateQueries({ queryKey: ['budgets'] })
-  qc.invalidateQueries({ queryKey: ['financialInsights'] })
-  qc.invalidateQueries({ queryKey: ['anomalies'] })
-  qc.invalidateQueries({ queryKey: ['trendAnalysis'] })
-}
+type TransactionFilters = Record<string, string | number | undefined>
+type UpdateTransactionPayload = { id: number } & Record<string, unknown>
 
 export function useTransactions(filters?: TransactionFilters) {
   return useQuery({
-    queryKey: transactionKeys.list(filters),
-    queryFn: () => fetchTransactions(filters),
+    queryKey: ['transactions', filters],
+    queryFn: () => transactionsService.list(filters),
   })
 }
 
-export function useTransaction(id: string) {
+export function useTransactionsSummary(year: number, month: number) {
   return useQuery({
-    queryKey: transactionKeys.detail(id),
-    queryFn: () => fetchTransactionById(id),
-    enabled: !!id,
+    queryKey: ['transactions', 'summary', year, month],
+    queryFn: () => transactionsService.summary(year, month),
   })
 }
 
-export function useRecentTransactions(limit = 5) {
-  return useQuery({
-    queryKey: transactionKeys.recent(limit),
-    queryFn: () => fetchRecentTransactions(limit),
-  })
-}
-
-export function useMonthlySummary(year: number, month: number) {
-  return useQuery({
-    queryKey: transactionKeys.summary(year, month),
-    queryFn: () => fetchMonthlySummary(year, month),
-    staleTime: 0,
-  })
+function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['transactions'] })
+  qc.invalidateQueries({ queryKey: ['accounts'] })
+  qc.invalidateQueries({ queryKey: ['dashboard'] })
 }
 
 export function useCreateTransaction() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) =>
-      createTransaction(payload),
+    mutationFn: transactionsService.create,
     onSuccess: () => invalidateAll(qc),
   })
 }
@@ -61,8 +35,7 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<Omit<Transaction, 'id' | 'user_id'>> }) =>
-      updateTransaction(id, payload),
+    mutationFn: ({ id, ...data }: UpdateTransactionPayload) => transactionsService.update(id, data),
     onSuccess: () => invalidateAll(qc),
   })
 }
@@ -70,7 +43,7 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => deleteTransaction(id),
+    mutationFn: transactionsService.delete,
     onSuccess: () => invalidateAll(qc),
   })
 }

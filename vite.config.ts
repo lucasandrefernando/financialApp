@@ -12,7 +12,7 @@ const normalizeBasePath = (value) => {
 }
 
 const BASE_PATH = normalizeBasePath(
-  process.env.VITE_APP_BASE_PATH || '/financialApp/'
+  process.env.VITE_APP_BASE_PATH || '/'
 )
 
 export default defineConfig({
@@ -21,6 +21,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:21149',
+        changeOrigin: true,
+      },
     },
   },
 })

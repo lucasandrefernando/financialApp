@@ -1,56 +1,31 @@
-import { clsx } from 'clsx'
+import { cn } from '../../lib/utils'
 
 interface ProgressBarProps {
-  current: number
-  total: number
-  alertThreshold?: number
-  label?: string
+  value: number
+  max?: number
   showPercentage?: boolean
-  showValues?: boolean
-  size?: 'sm' | 'md'
-  currency?: string
+  className?: string
 }
 
-export function ProgressBar({ current, total, alertThreshold = 80, label, showPercentage = true, showValues = true, size = 'md', currency = 'BRL' }: ProgressBarProps) {
-  const percent = total > 0 ? Math.min((current / total) * 100, 100) : 0
-  const isAlert = percent >= alertThreshold && percent < 100
-  const isExceeded = current > total
-
-  const barColor = isExceeded
-    ? 'bg-error-500'
-    : isAlert
-      ? 'bg-warning-500'
-      : 'bg-success-500'
-
-  const trackColor = 'bg-slate-100 dark:bg-slate-700'
-
-  const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency })
+export function ProgressBar({ value, max = 100, showPercentage = false, className }: ProgressBarProps) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
+  const barColor = pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-yellow-500' : 'bg-green-500'
 
   return (
-    <div className="w-full space-y-1.5">
-      {(label || showValues) && (
-        <div className="flex items-center justify-between">
-          {label && <span className="text-sm text-slate-600 dark:text-slate-400">{label}</span>}
-          {showValues && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-              {formatter.format(current)} / {formatter.format(total)}
-            </span>
-          )}
-        </div>
-      )}
-      <div className={clsx('w-full rounded-full overflow-hidden', size === 'sm' ? 'h-1.5' : 'h-2.5', trackColor)}>
+    <div className={cn('w-full', className)}>
+      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className={clsx('h-full rounded-full transition-all duration-500', barColor)}
-          style={{ width: `${Math.min(percent, 100)}%` }}
+          className={cn('h-full rounded-full transition-all duration-500', barColor)}
+          style={{ width: `${pct}%` }}
           role="progressbar"
-          aria-valuenow={Math.round(percent)}
+          aria-valuenow={Math.round(pct)}
           aria-valuemin={0}
           aria-valuemax={100}
         />
       </div>
       {showPercentage && (
-        <p className={clsx('text-xs font-medium tabular-nums', isExceeded ? 'text-error-500' : isAlert ? 'text-warning-500' : 'text-success-500')}>
-          {Math.round(percent)}%{isExceeded ? ' (excedido)' : ''}
+        <p className={cn('text-xs font-medium mt-1', pct >= 80 ? 'text-red-500' : pct >= 60 ? 'text-yellow-500' : 'text-green-500')}>
+          {Math.round(pct)}%
         </p>
       )}
     </div>

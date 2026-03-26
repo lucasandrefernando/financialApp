@@ -1,18 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import { clsx } from 'clsx'
-import { Home, List, PieChart, Target, User, TrendingUp, ChevronLeft, ChevronRight, Landmark } from 'lucide-react'
-import { useAppStore } from '@/stores/appStore'
+import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight, Wallet } from 'lucide-react'
+import { useAppStore } from '../../stores/appStore'
+import { cn } from '../../lib/utils'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
-  { to: '/profile/accounts', icon: Landmark, label: 'Contas' },
-  { to: '/transactions', icon: List, label: 'Transações' },
+  { to: '/transactions', icon: ArrowLeftRight, label: 'Transações' },
+  { to: '/accounts', icon: CreditCard, label: 'Contas' },
   { to: '/budgets', icon: PieChart, label: 'Orçamentos' },
   { to: '/goals', icon: Target, label: 'Metas' },
-  { to: '/reports', icon: TrendingUp, label: 'Relatórios' },
-]
-
-const bottomItems = [
   { to: '/profile', icon: User, label: 'Perfil' },
 ]
 
@@ -20,20 +16,23 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useAppStore()
 
   return (
-    <aside
-      className={clsx(
-        'hidden lg:flex flex-col h-screen bg-white dark:bg-slate-800 border-r border-slate-100 dark:border-slate-700',
-        'transition-all duration-300 flex-shrink-0',
-        sidebarCollapsed ? 'w-16' : 'w-60'
-      )}
-    >
-      <div className={clsx('flex items-center h-16 px-4 border-b border-slate-100 dark:border-slate-700', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
+    <aside className={cn(
+      'hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0',
+      sidebarCollapsed ? 'w-16' : 'w-60'
+    )}>
+      <div className={cn(
+        'flex items-center h-16 px-4 border-b border-gray-100',
+        sidebarCollapsed ? 'justify-center' : 'justify-between'
+      )}>
         {!sidebarCollapsed && (
-          <span className="font-bold text-primary-500 text-lg">FinanceApp</span>
+          <div className="flex items-center gap-2">
+            <Wallet size={20} className="text-indigo-600" />
+            <span className="font-bold text-indigo-600 text-lg">FinanceApp</span>
+          </div>
         )}
         <button
           onClick={toggleSidebar}
-          className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
           aria-label={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -46,11 +45,12 @@ export function Sidebar() {
             <li key={to}>
               <NavLink
                 to={to}
-                className={({ isActive }) => clsx(
-                  'flex items-center gap-3 px-3 h-10 rounded-[10px] text-sm font-medium transition-colors',
+                end={to === '/'}
+                className={({ isActive }) => cn(
+                  'flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700',
+                    ? 'bg-indigo-50 text-indigo-600'
+                    : 'text-gray-600 hover:bg-gray-100',
                   sidebarCollapsed && 'justify-center px-0'
                 )}
                 title={sidebarCollapsed ? label : undefined}
@@ -62,26 +62,6 @@ export function Sidebar() {
           ))}
         </ul>
       </nav>
-
-      <div className="py-4 px-2 border-t border-slate-100 dark:border-slate-700">
-        {bottomItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => clsx(
-              'flex items-center gap-3 px-3 h-10 rounded-[10px] text-sm font-medium transition-colors',
-              isActive
-                ? 'bg-primary-100 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700',
-              sidebarCollapsed && 'justify-center px-0'
-            )}
-            title={sidebarCollapsed ? label : undefined}
-          >
-            <Icon size={18} className="flex-shrink-0" />
-            {!sidebarCollapsed && <span>{label}</span>}
-          </NavLink>
-        ))}
-      </div>
     </aside>
   )
 }

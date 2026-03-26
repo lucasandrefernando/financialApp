@@ -1,120 +1,104 @@
-import http from 'node:http'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import express from 'express'
+import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
+
+// routes
+import authRoutes from './backend/routes/auth.js'
+import accountRoutes from './backend/routes/accounts.js'
+import incomeRoutes from './backend/routes/income.js'
+import categoryRoutes from './backend/routes/categories.js'
+import transactionRoutes from './backend/routes/transactions.js'
+import budgetRoutes from './backend/routes/budgets.js'
+import goalRoutes from './backend/routes/goals.js'
+import dashboardRoutes from './backend/routes/dashboard.js'
+import sharingRoutes from './backend/routes/sharing.js'
+import insightRoutes from './backend/routes/insights.js'
+import onboardingRoutes from './backend/routes/onboarding.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const PORT = process.env.PORT || 21149
+const app = express()
+
+const PORT = Number(process.env.PORT || 21149)
 const HOST = process.env.HOST || '0.0.0.0'
-const PUBLIC_DIR = path.join(__dirname, 'public')
-const DIST_DIR = path.join(__dirname, 'dist')
 const BASE_PATH = normalizeBasePath(
   process.env.APP_BASE_PATH ||
   process.env.BASE_PATH ||
   process.env.VITE_APP_BASE_PATH ||
-  '/financialApp'
+  '/'
 )
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
-  '.webp': 'image/webp',
+app.use(cors())
+app.use(express.json({ limit: '10mb' }))
+
+function normalizeBasePath(value) {
+  if (!value || value === '/') return '/'
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
 }
 
-function normalizeBasePath(basePath) {
-  if (!basePath) return '/'
-  const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`
-  const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/, '')
-  return withoutTrailingSlash || '/'
+function mountApiRoutes(prefix = '') {
+  const routePrefix = prefix === '/' ? '' : prefix
+
+  app.use(`${routePrefix}/api/auth`, authRoutes)
+  app.use(`${routePrefix}/api/accounts`, accountRoutes)
+  app.use(`${routePrefix}/api/income`, incomeRoutes)
+  app.use(`${routePrefix}/api/categories`, categoryRoutes)
+  app.use(`${routePrefix}/api/transactions`, transactionRoutes)
+  app.use(`${routePrefix}/api/budgets`, budgetRoutes)
+  app.use(`${routePrefix}/api/goals`, goalRoutes)
+  app.use(`${routePrefix}/api/dashboard`, dashboardRoutes)
+  app.use(`${routePrefix}/api/sharing`, sharingRoutes)
+  app.use(`${routePrefix}/api/insights`, insightRoutes)
+  app.use(`${routePrefix}/api/onboarding`, onboardingRoutes)
 }
 
-function sendNotFound(res) {
-  res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
-  res.end('Not found')
+mountApiRoutes('/')
+if (BASE_PATH !== '/') {
+  mountApiRoutes(BASE_PATH)
 }
 
-function sendStaticMissing(res) {
-  res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' })
-  res.end('Arquivos estaticos ausentes. Gere e publique o build da aplicacao.')
+const STATIC_DIR = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
+  ? path.join(__dirname, 'public')
+  : path.join(__dirname, 'dist')
+
+app.use(express.static(STATIC_DIR))
+if (BASE_PATH !== '/') {
+  app.use(BASE_PATH, express.static(STATIC_DIR))
 }
 
-function fileExists(filePath) {
-  try {
-    const stat = fs.statSync(filePath)
-    return stat.isFile()
-  } catch {
-    return false
-  }
-}
+app.get('*', (req, res) => {
+  const rootApiPath = req.path === '/api' || req.path.startsWith('/api/')
+  const baseApiPath =
+    BASE_PATH !== '/' &&
+    (req.path === `${BASE_PATH}/api` || req.path.startsWith(`${BASE_PATH}/api/`))
 
-function streamFile(filePath, res) {
-  const ext = path.extname(filePath).toLowerCase()
-  const mime = MIME[ext] || 'application/octet-stream'
-  res.writeHead(200, { 'Content-Type': mime })
-  fs.createReadStream(filePath).pipe(res)
-}
-
-function resolveStaticDir() {
-  if (fileExists(path.join(PUBLIC_DIR, 'index.html'))) return PUBLIC_DIR
-  if (fileExists(path.join(DIST_DIR, 'index.html'))) return DIST_DIR
-  return null
-}
-
-const STATIC_DIR = resolveStaticDir()
-
-const server = http.createServer((req, res) => {
-  if (!STATIC_DIR) {
-    sendStaticMissing(res)
-    return
-  }
-  const spaIndex = path.join(STATIC_DIR, 'index.html')
-
-  if (!req.url) {
-    sendNotFound(res)
-    return
+  if (rootApiPath || baseApiPath) {
+    return res.status(404).json({ error: 'Rota API nao encontrada' })
   }
 
-  const requestPath = decodeURIComponent(req.url.split('?')[0] || '/')
-  const hasBasePrefix =
-    BASE_PATH === '/' ||
-    requestPath === BASE_PATH ||
-    requestPath.startsWith(`${BASE_PATH}/`)
-
-  let localPath = requestPath
-  if (hasBasePrefix && BASE_PATH !== '/') {
-    localPath = requestPath.slice(BASE_PATH.length) || '/'
+  const index = path.join(STATIC_DIR, 'index.html')
+  if (fs.existsSync(index)) {
+    return res.sendFile(index)
   }
 
-  const cleanLocalPath = localPath.replace(/^\/+/, '')
-  const safePath = path.normalize(cleanLocalPath).replace(/^(\.\.[/\\])+/, '')
-  const requestedFile = path.join(STATIC_DIR, safePath)
-
-  if (safePath && fileExists(requestedFile)) {
-    streamFile(requestedFile, res)
-    return
-  }
-
-  if ((hasBasePrefix || requestPath === '/') && fileExists(spaIndex)) {
-    streamFile(spaIndex, res)
-    return
-  }
-
-  sendNotFound(res)
+  return res.status(503).send('Build not found. Run npm run build.')
 })
 
-server.listen(PORT, HOST, () => {
+app.use((err, req, res, next) => {
+  console.error(err)
+  res.status(500).json({ error: 'Erro interno do servidor' })
+})
+
+const server = app.listen(PORT, HOST, () => {
   console.log(`Financial App rodando em ${HOST}:${PORT}`)
   console.log(`Base path configurada: ${BASE_PATH}`)
-  console.log(`Diretorio estatico: ${STATIC_DIR || 'nao encontrado'}`)
+})
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Porta ${PORT} em uso. Aguarde e tente novamente.`)
+    process.exit(1)
+  }
 })

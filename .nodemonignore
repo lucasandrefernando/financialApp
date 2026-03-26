@@ -1,0 +1,9 @@
+src/
+dist/
+public/
+node_modules/
+*.css
+*.tsx
+*.ts
+vite.config.ts
+tailwind.config.js
