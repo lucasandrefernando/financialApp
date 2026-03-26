@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 
-const ACCESS_SECRET = process.env.JWT_SECRET || 'financialapp-access-secret-2026'
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'financialapp-refresh-secret-2026'
+const ACCESS_SECRET = process.env.JWT_SECRET || 'change-me-access-secret'
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'change-me-refresh-secret'
 
 export function generateAccessToken(userId) {
   return jwt.sign({ userId }, ACCESS_SECRET, { expiresIn: '15m' })

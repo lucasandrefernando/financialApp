@@ -1,19 +1,27 @@
 import nodemailer from 'nodemailer'
 
+const smtpUser = process.env.SMTP_USER || ''
+const smtpPass = process.env.SMTP_PASS || ''
+const mailFrom = process.env.MAIL_FROM || smtpUser || 'no-reply@financialapp.local'
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.SMTP_USER || 'lucasandre.sanos@gmail.com',
-    pass: process.env.SMTP_PASS || 'ttfa pldu paym kbdm',
+    user: smtpUser,
+    pass: smtpPass,
   },
 })
 
 export async function sendPasswordResetEmail(to, resetToken, appUrl) {
+  if (!smtpUser || !smtpPass) {
+    throw new Error('SMTP_USER/SMTP_PASS nao configurados no ambiente.')
+  }
+
   const baseUrl = appUrl || process.env.APP_URL || 'http://localhost:5173'
   const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
   await transporter.sendMail({
-    from: `"FinanceApp" <lucasandre.sanos@gmail.com>`,
+    from: `"FinanceApp" <${mailFrom}>`,
     to,
     subject: 'Recuperação de senha — FinanceApp',
     html: `

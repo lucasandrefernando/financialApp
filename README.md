@@ -39,35 +39,48 @@ O schema SQL esta em `database/schema.sql`.
 
 ## Deploy na KingHost (Node.js + Git)
 
-1. Copie `.env.example` para `.env` e preencha os segredos reais.
-2. Gere o build:
+Este projeto foi ajustado para o mesmo formato do Portfolio que ja funciona na KingHost:
+- arquivo de entrada pronto: `FinancialApp.js`
+- frontend pronto em `public/`
 
-```bash
-npm run build
-```
+### Passo a passo rapido
 
-3. No servidor KingHost:
+1. Configure os secrets/vars do projeto.
+2. Rode build completo para KingHost:
 
 ```bash
 npm install
-npm run start:kinghost
+npm run build:kinghost
 ```
 
-4. Configuracao no painel Node.js:
+3. No painel Node.js da KingHost:
 - Caminho da aplicacao: `/financialApp`
-- Script: `server.js`
+- Script: `FinancialApp.js`
 - Acesso Web: `SIM`
 - SSL: `SIM`
 
-5. Variaveis recomendadas para KingHost:
+4. Variaveis recomendadas para KingHost:
 - `PORT=21149`
 - `HOST=0.0.0.0`
 - `APP_BASE_PATH=/financialApp`
 - `VITE_APP_BASE_PATH=/financialApp/`
+- `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
+- `JWT_SECRET`, `JWT_REFRESH_SECRET`
+- `GROQ_API_KEY` (se usar insights IA no backend)
+- `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (recuperacao de senha)
 
-6. Opcional com PM2:
+5. Opcional com PM2:
 
 ```bash
 npm run pm2:kinghost:start
 npm run pm2:kinghost:logs
 ```
+
+## CI/CD (GitHub Actions)
+
+O workflow `.github/workflows/deploy.yml` faz:
+1. `npm ci`
+2. `npm run build:kinghost`
+3. Commit automatico de `FinancialApp.js` e `public/` na `main`
+
+Assim, a automacao Git->FTP da KingHost sempre recebe artefato pronto de execucao.
