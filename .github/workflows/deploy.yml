@@ -9,6 +9,10 @@ on:
       - 'public/**'
   workflow_dispatch:
 
+concurrency:
+  group: kinghost-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -36,11 +40,33 @@ jobs:
 
       - name: Commit built files to main
         run: |
+          set -e
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
+
+          # Evita push rejeitado quando outro job/commit avancou a branch.
+          git checkout -B main
+          git pull --rebase origin main
+
           git add FinancialApp.js public/
-          git diff --staged --quiet || git commit -m "chore: update built files [skip ci]"
-          git push
+          if git diff --staged --quiet; then
+            echo "Nenhuma alteracao de build para commit."
+            exit 0
+          fi
+
+          git commit -m "chore: update built files [skip ci]"
+
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin main; then
+              echo "Push concluido na tentativa $attempt."
+              exit 0
+            fi
+            echo "Tentativa $attempt falhou. Repetindo em 5s..."
+            sleep 5
+          done
+
+          echo "Falha ao fazer push apos 3 tentativas."
+          exit 1
 
       - name: Deployment Summary
         if: always()
