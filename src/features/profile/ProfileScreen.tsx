@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { LogOut, User, Check } from 'lucide-react'
+import { LogOut, User, Check, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
-import { logout } from '../../services/auth'
+import { deleteMyAccount, logout } from '../../services/auth'
 import { sharingService } from '../../services/sharing'
 import api from '../../lib/api'
 import { Input } from '../../components/ui/Input'
@@ -18,6 +18,7 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(user?.name || '')
   const [saving, setSaving] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
 
   useEffect(() => { setName(user?.name || '') }, [user])
 
@@ -51,6 +52,28 @@ export default function ProfileScreen() {
     await logout()
     storeLogout()
     navigate('/login', { replace: true })
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmation = window.prompt(
+      'Essa acao remove sua conta e dados do app. Digite EXCLUIR para confirmar:'
+    )
+    if (confirmation !== 'EXCLUIR') {
+      toast.error('Confirmacao incorreta. Exclusao cancelada.')
+      return
+    }
+
+    setDeletingAccount(true)
+    try {
+      await deleteMyAccount()
+      storeLogout()
+      toast.success('Conta excluida com sucesso.')
+      navigate('/login', { replace: true })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Erro ao excluir conta.')
+    } finally {
+      setDeletingAccount(false)
+    }
   }
 
   return (
@@ -152,6 +175,23 @@ export default function ProfileScreen() {
       >
         Sair da conta
       </Button>
+
+      <Card title="Zona de perigo">
+        <div className="px-4 pb-4">
+          <p className="text-sm text-gray-600 mb-3">
+            Ao excluir sua conta, seus dados deixam de aparecer no sistema e a acao nao pode ser desfeita.
+          </p>
+          <Button
+            variant="danger"
+            fullWidth
+            loading={deletingAccount}
+            onClick={handleDeleteAccount}
+            leftIcon={<AlertTriangle size={16} />}
+          >
+            Excluir minha conta
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }

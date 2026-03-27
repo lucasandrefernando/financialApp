@@ -29,3 +29,9 @@ export async function logout() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
 }
+
+export async function deleteMyAccount() {
+  await api.delete('/api/auth/me')
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+}

@@ -342,6 +342,125 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 })
 
+// PUT /api/auth/me
+router.put('/me', requireAuth, async (req, res) => {
+  try {
+    const { name, currency, locale, timezone, avatar_url } = req.body || {}
+
+    const fields = []
+    const values = []
+
+    if (typeof name === 'string') {
+      if (!name.trim()) return res.status(400).json({ error: 'Nome e obrigatorio' })
+      fields.push('name = ?')
+      values.push(name.trim())
+    }
+    if (typeof currency === 'string' && currency.trim()) {
+      fields.push('currency = ?')
+      values.push(currency.trim())
+    }
+    if (typeof locale === 'string' && locale.trim()) {
+      fields.push('locale = ?')
+      values.push(locale.trim())
+    }
+    if (typeof timezone === 'string' && timezone.trim()) {
+      fields.push('timezone = ?')
+      values.push(timezone.trim())
+    }
+    if (avatar_url !== undefined) {
+      fields.push('avatar_url = ?')
+      values.push(typeof avatar_url === 'string' && avatar_url.trim() ? avatar_url.trim() : null)
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'Nenhum campo para atualizar' })
+    }
+
+    fields.push('updated_at = NOW()')
+    values.push(req.userId)
+
+    await pool.query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`,
+      values
+    )
+
+    const [users] = await pool.query(
+      `SELECT id, name, email, avatar_url, currency, locale, timezone,
+              onboarding_completed, created_at, updated_at
+       FROM users WHERE id = ? AND deleted_at IS NULL`,
+      [req.userId]
+    )
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'Usuario nao encontrado' })
+    }
+
+    return res.json({ data: users[0] })
+  } catch (err) {
+    console.error('update me error', err)
+    return res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+})
+
+// DELETE /api/auth/me
+router.delete('/me', requireAuth, async (req, res) => {
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    const [users] = await conn.query(
+      'SELECT id, email FROM users WHERE id = ? AND deleted_at IS NULL',
+      [req.userId]
+    )
+    if (users.length === 0) {
+      await conn.rollback()
+      conn.release()
+      return res.status(404).json({ error: 'Usuario nao encontrado' })
+    }
+
+    const currentUser = users[0]
+    const deletedEmail = `deleted+${currentUser.id}+${Date.now()}@deleted.local`
+    const deletedPassword = await bcrypt.hash(randomBytes(32).toString('hex'), 10)
+
+    await conn.query('DELETE FROM user_sessions WHERE user_id = ?', [req.userId])
+
+    // Soft delete user-owned/business records so they stop appearing in the app.
+    await conn.query('UPDATE bank_accounts SET deleted_at = NOW() WHERE owner_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('UPDATE categories SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('UPDATE transactions SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('UPDATE budgets SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('UPDATE goals SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('UPDATE income_sources SET deleted_at = NOW() WHERE user_id = ? AND deleted_at IS NULL', [req.userId])
+    await conn.query('DELETE FROM recurring_transactions WHERE user_id = ?', [req.userId])
+    await conn.query('DELETE FROM account_members WHERE user_id = ?', [req.userId])
+    await conn.query('DELETE FROM account_invitations WHERE invited_by = ? OR email = ?', [req.userId, currentUser.email])
+    await conn.query('DELETE FROM notifications WHERE user_id = ?', [req.userId])
+
+    await conn.query(
+      `UPDATE users
+       SET name = 'Conta removida',
+           email = ?,
+           avatar_url = NULL,
+           password_hash = ?,
+           onboarding_completed = FALSE,
+           deleted_at = NOW(),
+           updated_at = NOW()
+       WHERE id = ?`,
+      [deletedEmail, deletedPassword, req.userId]
+    )
+
+    await conn.commit()
+    conn.release()
+
+    return res.json({ data: { message: 'Conta excluida com sucesso' } })
+  } catch (err) {
+    await conn.rollback()
+    conn.release()
+    console.error('delete me error', err)
+    return res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+})
+
 // POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
   try {
