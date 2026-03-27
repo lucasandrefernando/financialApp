@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
 const normalizeBasePath = (value) => {
   if (!value || value === '/') return '/'
@@ -18,7 +19,7 @@ const BASE_PATH = normalizeBasePath(
 export default defineConfig({
   base: BASE_PATH,
   publicDir: false,
-  plugins: [react()],
+  plugins: [react(), viteSingleFile()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
