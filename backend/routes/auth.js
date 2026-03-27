@@ -11,6 +11,54 @@ import { requireAuth } from '../middleware/auth.js'
 import { sendPasswordResetEmail } from '../utils/mailer.js'
 
 const router = Router()
+const GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
+
+function normalizeBasePath(value) {
+  if (!value || value === '/') return ''
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
+function getAppBasePath() {
+  return normalizeBasePath(process.env.APP_BASE_PATH || process.env.VITE_APP_BASE_PATH || '/')
+}
+
+function getPublicAppUrl() {
+  const appUrl = (process.env.APP_URL || '').replace(/\/+$/, '')
+  return appUrl || getAppBasePath()
+}
+
+function getGoogleRedirectUri() {
+  const explicit = (process.env.GOOGLE_REDIRECT_URI || '').trim()
+  if (explicit) return explicit
+
+  const appUrl = getPublicAppUrl()
+  if (!appUrl) return ''
+  return `${appUrl}/api/auth/google/callback`
+}
+
+function buildAuthCallbackRedirect(fragment = '') {
+  const appUrl = getPublicAppUrl()
+  const callbackPath = '/auth/callback'
+  if (!appUrl) return `${callbackPath}${fragment}`
+  return `${appUrl}${callbackPath}${fragment}`
+}
+
+async function createSessionTokens(userId) {
+  const accessToken = generateAccessToken(userId)
+  const refreshToken = generateRefreshToken(userId)
+
+  await pool.query('DELETE FROM user_sessions WHERE user_id = ? AND expires_at < NOW()', [userId])
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  await pool.query(
+    'INSERT INTO user_sessions (user_id, refresh_token, expires_at) VALUES (?, ?, ?)',
+    [userId, refreshToken, expiresAt]
+  )
+
+  return { accessToken, refreshToken }
+}
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -48,15 +96,7 @@ router.post('/register', async (req, res) => {
     )
 
     const userId = result.insertId
-    const accessToken = generateAccessToken(userId)
-    const refreshToken = generateRefreshToken(userId)
-
-    // Store refresh token (expires in 7 days)
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    await pool.query(
-      'INSERT INTO user_sessions (user_id, refresh_token, expires_at) VALUES (?, ?, ?)',
-      [userId, refreshToken, expiresAt]
-    )
+    const { accessToken, refreshToken } = await createSessionTokens(userId)
 
     const [users] = await pool.query(
       'SELECT id, name, email, avatar_url, currency, locale, timezone, onboarding_completed, created_at FROM users WHERE id = ?',
@@ -100,19 +140,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Email ou senha incorretos' })
     }
 
-    const accessToken = generateAccessToken(user.id)
-    const refreshToken = generateRefreshToken(user.id)
-
-    // Clean up expired sessions and save new one
-    await pool.query(
-      'DELETE FROM user_sessions WHERE user_id = ? AND expires_at < NOW()',
-      [user.id]
-    )
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    await pool.query(
-      'INSERT INTO user_sessions (user_id, refresh_token, expires_at) VALUES (?, ?, ?)',
-      [user.id, refreshToken, expiresAt]
-    )
+    const { accessToken, refreshToken } = await createSessionTokens(user.id)
 
     const { password_hash, ...safeUser } = user
 
@@ -126,6 +154,126 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('login error', err)
     return res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+})
+
+// GET /api/auth/google/start
+router.get('/google/start', async (req, res) => {
+  try {
+    const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim()
+    const redirectUri = getGoogleRedirectUri()
+
+    if (!clientId || !redirectUri) {
+      return res.status(500).json({
+        error: 'Google OAuth nao configurado. Defina GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI/APP_URL.',
+      })
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'select_account',
+    })
+
+    return res.redirect(`${GOOGLE_OAUTH_URL}?${params.toString()}`)
+  } catch (err) {
+    console.error('google start error', err)
+    return res.status(500).json({ error: 'Erro ao iniciar login com Google' })
+  }
+})
+
+// GET /api/auth/google/callback
+router.get('/google/callback', async (req, res) => {
+  try {
+    const code = String(req.query.code || '')
+    const oauthError = String(req.query.error || '')
+    if (oauthError) {
+      return res.redirect(buildAuthCallbackRedirect('#error=google_denied'))
+    }
+    if (!code) {
+      return res.redirect(buildAuthCallbackRedirect('#error=google_missing_code'))
+    }
+
+    const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim()
+    const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim()
+    const redirectUri = getGoogleRedirectUri()
+
+    if (!clientId || !clientSecret || !redirectUri) {
+      return res.redirect(buildAuthCallbackRedirect('#error=google_not_configured'))
+    }
+
+    const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    })
+
+    const tokenData = await tokenResponse.json()
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      console.error('google token exchange error', tokenData)
+      return res.redirect(buildAuthCallbackRedirect('#error=google_token_exchange'))
+    }
+
+    const profileResponse = await fetch(GOOGLE_USERINFO_URL, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    })
+    const profile = await profileResponse.json()
+    if (!profileResponse.ok) {
+      console.error('google userinfo error', profile)
+      return res.redirect(buildAuthCallbackRedirect('#error=google_profile'))
+    }
+
+    const emailVerified = profile.email_verified === true || profile.email_verified === 'true'
+    if (!profile.email || !emailVerified) {
+      return res.redirect(buildAuthCallbackRedirect('#error=google_email_not_verified'))
+    }
+
+    const [existingUsers] = await pool.query(
+      'SELECT * FROM users WHERE email = ? AND deleted_at IS NULL',
+      [profile.email]
+    )
+
+    let userId
+    if (existingUsers.length > 0) {
+      userId = existingUsers[0].id
+      await pool.query('UPDATE users SET name = ?, avatar_url = ? WHERE id = ?', [
+        profile.name || existingUsers[0].name || 'Usuario Google',
+        profile.picture || existingUsers[0].avatar_url || null,
+        userId,
+      ])
+    } else {
+      const generatedPasswordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10)
+      const [insertResult] = await pool.query(
+        `INSERT INTO users (name, email, password_hash, avatar_url, currency, locale, timezone)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          profile.name || profile.email.split('@')[0] || 'Usuario Google',
+          profile.email,
+          generatedPasswordHash,
+          profile.picture || null,
+          'BRL',
+          'pt-BR',
+          'America/Sao_Paulo',
+        ]
+      )
+      userId = insertResult.insertId
+    }
+
+    const { accessToken, refreshToken } = await createSessionTokens(userId)
+    const fragment = `#access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`
+    return res.redirect(buildAuthCallbackRedirect(fragment))
+  } catch (err) {
+    console.error('google callback error', err)
+    return res.redirect(buildAuthCallbackRedirect('#error=google_unexpected'))
   }
 })
 

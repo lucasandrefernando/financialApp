@@ -15,10 +15,18 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
+function normalizeBasePath(value: string | undefined) {
+  if (!value || value === '/') return ''
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
 export default function LoginScreen() {
   const navigate = useNavigate()
   const { setUser } = useAuthStore()
   const [error, setError] = useState('')
+  const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
+  const googleLoginUrl = `${appBasePath}/api/auth/google/start`
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -52,6 +60,25 @@ export default function LoginScreen() {
               {error}
             </div>
           )}
+
+          <a
+            href={googleLoginUrl}
+            className="mb-4 w-full inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white border border-gray-200 text-[11px] font-semibold text-gray-700"
+              aria-hidden="true"
+            >
+              G
+            </span>
+            Continuar com Google
+          </a>
+
+          <div className="mb-4 flex items-center gap-3">
+            <div className="h-px bg-gray-200 flex-1" />
+            <span className="text-xs uppercase tracking-wide text-gray-400">ou</span>
+            <div className="h-px bg-gray-200 flex-1" />
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input

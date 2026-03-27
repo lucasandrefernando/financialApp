@@ -1,17 +1,20 @@
 import api from '../lib/api'
 import type { User } from '../types'
 
+export function persistAuthTokens(accessToken: string, refreshToken: string) {
+  localStorage.setItem('access_token', accessToken)
+  localStorage.setItem('refresh_token', refreshToken)
+}
+
 export async function login(email: string, password: string) {
   const { data } = await api.post('/api/auth/login', { email, password })
-  localStorage.setItem('access_token', data.access_token)
-  localStorage.setItem('refresh_token', data.refresh_token)
+  persistAuthTokens(data.access_token, data.refresh_token)
   return data.user as User
 }
 
 export async function register(name: string, email: string, password: string) {
   const { data } = await api.post('/api/auth/register', { name, email, password })
-  localStorage.setItem('access_token', data.access_token)
-  localStorage.setItem('refresh_token', data.refresh_token)
+  persistAuthTokens(data.access_token, data.refresh_token)
   return data.user as User
 }
 

@@ -4,6 +4,7 @@ import { useAuthInit } from './hooks/useAuth'
 import AppLayout from './components/layout/AppLayout'
 import { ToastContainer } from './components/ui/Toast'
 import LoginScreen from './features/auth/LoginScreen'
+import GoogleAuthCallbackScreen from './features/auth/GoogleAuthCallbackScreen'
 import RegisterScreen from './features/auth/RegisterScreen'
 import ForgotPasswordScreen from './features/auth/ForgotPasswordScreen'
 import ResetPasswordScreen from './features/auth/ResetPasswordScreen'
@@ -45,6 +46,7 @@ export default function App() {
       <ToastContainer />
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/auth/callback" element={<GoogleAuthCallbackScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/reset-password" element={<ResetPasswordScreen />} />
