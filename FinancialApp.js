@@ -29,7 +29,7 @@ const BASE_PATH = normalizeBasePath(
   process.env.APP_BASE_PATH ||
   process.env.BASE_PATH ||
   process.env.VITE_APP_BASE_PATH ||
-  '/'
+  '/financialApp'
 )
 
 app.use(cors())
