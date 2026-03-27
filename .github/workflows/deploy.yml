@@ -45,7 +45,7 @@ jobs:
 
           # Evita push rejeitado quando outro job/commit avancou a branch.
           git checkout -B main
-          git pull --rebase origin main
+          git pull --rebase --autostash origin main
 
           git add public/
           if git diff --staged --quiet; then
@@ -56,7 +56,7 @@ jobs:
           git commit -m "chore: update built files [skip ci]"
 
           for attempt in 1 2 3; do
-            if git pull --rebase origin main && git push origin main; then
+            if git pull --rebase --autostash origin main && git push origin main; then
               echo "Push concluido na tentativa $attempt."
               exit 0
             fi
