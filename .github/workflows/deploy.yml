@@ -5,7 +5,6 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'FinancialApp.js'
       - 'public/**'
   workflow_dispatch:
 
@@ -48,7 +47,7 @@ jobs:
           git checkout -B main
           git pull --rebase origin main
 
-          git add FinancialApp.js public/
+          git add public/
           if git diff --staged --quiet; then
             echo "Nenhuma alteracao de build para commit."
             exit 0

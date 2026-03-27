@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'financial-app-kinghost',
-      script: 'server.js',
+      script: 'FinancialApp.js',
       cwd: './',
       env: {
         NODE_ENV: 'production',

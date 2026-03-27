@@ -14,4 +14,4 @@ fs.cpSync(distDir, publicDir, { recursive: true })
 
 console.log('Build preparado para KingHost:')
 console.log('- Frontend copiado de dist/ para public/')
-console.log('- Backend bundlado em FinancialApp.js')
+console.log('- Backend principal: FinancialApp.js')

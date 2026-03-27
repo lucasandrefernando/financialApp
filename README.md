@@ -81,6 +81,6 @@ npm run pm2:kinghost:logs
 O workflow `.github/workflows/deploy.yml` faz:
 1. `npm ci`
 2. `npm run build:kinghost`
-3. Commit automatico de `FinancialApp.js` e `public/` na `main`
+3. Commit automatico de `public/` na `main`
 
 Assim, a automacao Git->FTP da KingHost sempre recebe artefato pronto de execucao.
