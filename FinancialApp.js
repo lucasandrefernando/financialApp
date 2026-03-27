@@ -66,6 +66,14 @@ if (BASE_PATH !== '/') {
   mountApiRoutes(BASE_PATH)
 }
 
+if (BASE_PATH !== '/') {
+  const baseWithSlash = `${BASE_PATH}/`
+
+  // When users open the raw host:port root, send them to the configured app base path.
+  app.get('/', (req, res) => res.redirect(302, baseWithSlash))
+  app.get(BASE_PATH, (req, res) => res.redirect(302, baseWithSlash))
+}
+
 const STATIC_DIR = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
   ? path.join(__dirname, 'public')
   : path.join(__dirname, 'dist')
