@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import pool from './backend/db.js'
 
 // routes
 import authRoutes from './backend/routes/auth.js'
@@ -38,6 +39,20 @@ app.use(express.json({ limit: '10mb' }))
 app.get('/health', (req, res) => {
   res.json({ ok: true, app: 'selfmoney', time: new Date().toISOString() })
 })
+
+async function dbHealthHandler(req, res) {
+  try {
+    await pool.query('SELECT 1')
+    return res.json({ ok: true, db: 'up', time: new Date().toISOString() })
+  } catch (error) {
+    return res.status(503).json({ ok: false, db: 'down', error: 'db_unreachable', time: new Date().toISOString() })
+  }
+}
+
+app.get('/health/db', dbHealthHandler)
+if (BASE_PATH !== '/') {
+  app.get(`${BASE_PATH}/health/db`, dbHealthHandler)
+}
 
 function normalizeBasePath(value) {
   if (!value || value === '/') return '/'

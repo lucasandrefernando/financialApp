@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   type LucideIcon,
   ArrowDownLeft,
@@ -125,6 +125,7 @@ function getTodayDateString() {
 }
 
 export default function TransactionListScreen() {
+  const queryClient = useQueryClient()
   const { selectedMonth } = useAppStore()
   const monthDateRange = useMemo(
     () => getMonthDateRange(selectedMonth.year, selectedMonth.month),
@@ -149,6 +150,7 @@ export default function TransactionListScreen() {
   const [modalTab, setModalTab] = useState<TabType>('expense')
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -288,6 +290,28 @@ export default function TransactionListScreen() {
   const initialLoading = isLoading && page === 1 && visibleTransactions.length === 0
   const usingCustomDateRange = dateFrom !== monthDateRange.firstDay || dateTo !== monthDateRange.endDay
 
+  const syncAfterMutation = async () => {
+    setIsSyncing(true)
+    try {
+      if (page === 1) {
+        await refetch()
+      } else {
+        setPage(1)
+      }
+
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: ['transactions', 'summary', selectedMonth.year, selectedMonth.month],
+          type: 'active',
+        }),
+        queryClient.refetchQueries({ queryKey: ['dashboard'], type: 'active' }),
+        queryClient.refetchQueries({ queryKey: ['accounts'], type: 'active' }),
+      ])
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
   const handleDelete = async (id: number) => {
     if (!window.confirm('Excluir esta transação?')) return
 
@@ -296,11 +320,7 @@ export default function TransactionListScreen() {
       await deleteTx.mutateAsync(id)
       setVisibleTransactions(prev => prev.filter(tx => tx.id !== id))
       toast.success('Transação excluída.')
-      if (page === 1) {
-        await refetch()
-      } else {
-        setPage(1)
-      }
+      await syncAfterMutation()
     } catch (error: any) {
       const message =
         error?.response?.data?.error ||
@@ -326,11 +346,7 @@ export default function TransactionListScreen() {
   }
 
   const refreshTransactionsAfterSave = async () => {
-    if (page === 1) {
-      await refetch()
-      return
-    }
-    setPage(1)
+    await syncAfterMutation()
   }
 
   const contextAction = useMemo(() => {
@@ -509,9 +525,12 @@ export default function TransactionListScreen() {
             <p className="text-xs text-slate-500">
               {loadedCounters.all} transações carregadas
             </p>
-            {loadedCounters.open > 0 && (
-              <Badge color="yellow">{loadedCounters.open} em aberto</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {(isFetching || isSyncing) && <Badge color="blue">Sincronizando...</Badge>}
+              {loadedCounters.open > 0 && (
+                <Badge color="yellow">{loadedCounters.open} em aberto</Badge>
+              )}
+            </div>
           </div>
         </div>
       </div>

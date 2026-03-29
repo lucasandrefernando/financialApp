@@ -24,11 +24,22 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['dashboard'] })
 }
 
+async function syncActiveQueries(qc: ReturnType<typeof useQueryClient>) {
+  await Promise.all([
+    qc.refetchQueries({ queryKey: ['transactions'], type: 'active' }),
+    qc.refetchQueries({ queryKey: ['accounts'], type: 'active' }),
+    qc.refetchQueries({ queryKey: ['dashboard'], type: 'active' }),
+  ])
+}
+
 export function useCreateTransaction() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: transactionsService.create,
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: async () => {
+      invalidateAll(qc)
+      await syncActiveQueries(qc)
+    },
   })
 }
 
@@ -36,7 +47,10 @@ export function useUpdateTransaction() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, ...data }: UpdateTransactionPayload) => transactionsService.update(id, data),
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: async () => {
+      invalidateAll(qc)
+      await syncActiveQueries(qc)
+    },
   })
 }
 
@@ -44,6 +58,9 @@ export function useDeleteTransaction() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: transactionsService.delete,
-    onSuccess: () => invalidateAll(qc),
+    onSuccess: async () => {
+      invalidateAll(qc)
+      await syncActiveQueries(qc)
+    },
   })
 }
