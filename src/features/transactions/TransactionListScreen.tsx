@@ -447,21 +447,21 @@ export default function TransactionListScreen() {
             <h2 className="text-xl font-bold capitalize">{monthLabel}</h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="order-2 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-1">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Receitas</p>
-              <p className="mt-1 text-sm font-bold tabular-nums">{formatCurrency(summary.income)}</p>
+              <p className="mt-1 text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.income)}</p>
             </div>
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
+            <div className="order-3 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-2">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Gastos</p>
-              <p className="mt-1 text-sm font-bold tabular-nums">{formatCurrency(summary.expenses)}</p>
+              <p className="mt-1 text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.expenses)}</p>
             </div>
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
+            <div className="order-1 col-span-2 rounded-2xl border border-white/25 bg-white/15 p-3.5 sm:order-3 sm:col-span-1 sm:p-3">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Saldo acumulado</p>
-              <p className={cn('mt-1 text-sm font-bold tabular-nums', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
+              <p className={cn('mt-1 text-xl font-bold leading-tight tabular-nums sm:text-sm', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
                 {formatCurrency(summary.balance)}
               </p>
-              <p className="mt-1 text-[10px] text-violet-100/85">
+              <p className="mt-1 text-xs text-violet-100/90 sm:text-[10px]">
                 Mês: {formatCurrency(summary.monthBalance)}
               </p>
             </div>
