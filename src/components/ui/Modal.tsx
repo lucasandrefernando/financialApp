@@ -46,7 +46,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
             <X size={16} />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 p-5">{children}</div>
+        <div className="overflow-y-auto flex-1 p-5 pr-4 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-violet-200 [&::-webkit-scrollbar-track]:bg-transparent">
+          {children}
+        </div>
         {footer && (
           <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">{footer}</div>
         )}

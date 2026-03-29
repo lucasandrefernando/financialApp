@@ -304,7 +304,7 @@ export default function TransactionListScreen() {
         </div>
       </div>
 
-      <div className="sticky top-14 z-20 mt-4 -mx-3 bg-transparent px-3 pb-3 sm:-mx-4 sm:px-4">
+      <div className="relative z-10 mt-4 -mx-3 bg-transparent px-3 pb-3 sm:-mx-4 sm:px-4">
         <div className="rounded-2xl border border-slate-200/80 bg-white/95 px-3 py-3 shadow-sm backdrop-blur">
           <div className="relative">
             <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

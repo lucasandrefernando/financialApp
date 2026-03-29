@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X } from 'lucide-react'
+import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
@@ -83,6 +83,50 @@ function normalizeTags(value: unknown): string[] {
   return []
 }
 
+function normalizeText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function findCategoryByHints(
+  options: Array<{ value: string | number; label: string }>,
+  hints: string[]
+) {
+  if (!hints.length) return undefined
+
+  const normalizedHints = hints.map(normalizeText)
+  const match = options.find(option => {
+    const label = normalizeText(option.label)
+    return normalizedHints.some(hint => label.includes(hint))
+  })
+
+  if (!match) return undefined
+  return Number(match.value)
+}
+
+const EXPENSE_PRESETS: Array<{ label: string; hints: string[] }> = [
+  { label: 'Padaria', hints: ['alimentacao', 'mercado'] },
+  { label: 'Sacolão', hints: ['alimentacao', 'mercado', 'feira'] },
+  { label: 'Farmácia', hints: ['saude', 'farmacia'] },
+  { label: 'Supermercado', hints: ['alimentacao', 'mercado'] },
+  { label: 'Açougue', hints: ['alimentacao', 'mercado'] },
+  { label: 'Restaurante', hints: ['alimentacao', 'lazer'] },
+  { label: 'Combustível', hints: ['transporte', 'carro'] },
+  { label: 'Transporte', hints: ['transporte', 'mobilidade'] },
+]
+
+const INCOME_PRESETS: Array<{ label: string; hints: string[] }> = [
+  { label: 'Salário', hints: ['salario', 'trabalho'] },
+  { label: 'Freelance', hints: ['freelance', 'servico'] },
+  { label: 'Venda', hints: ['venda', 'comercio'] },
+  { label: 'Reembolso', hints: ['reembolso'] },
+  { label: 'Cashback', hints: ['cashback', 'bonus'] },
+  { label: 'Rendimento', hints: ['investimento', 'rendimento'] },
+]
+
 export default function AddTransactionModal({
   open,
   onClose,
@@ -93,6 +137,8 @@ export default function AddTransactionModal({
   const [tab, setTab] = useState<TabType>(initialTab)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const [showAdvancedExpense, setShowAdvancedExpense] = useState(false)
+  const [showAdvancedIncome, setShowAdvancedIncome] = useState(false)
 
   const isEditing = Boolean(editingTransaction)
 
@@ -136,6 +182,8 @@ export default function AddTransactionModal({
       setTab(nextTab)
       setTags(normalizeTags(editingTransaction.tags))
       setTagInput('')
+      setShowAdvancedExpense(nextTab === 'expense')
+      setShowAdvancedIncome(nextTab === 'income')
 
       if (nextTab === 'expense') {
         expForm.reset({
@@ -181,6 +229,8 @@ export default function AddTransactionModal({
     setTab(initialTab)
     setTags([])
     setTagInput('')
+    setShowAdvancedExpense(false)
+    setShowAdvancedIncome(false)
     expForm.reset({ date: today, status: 'completed', is_installment: false, expense_type: 'variable' })
     incForm.reset({ date: today, status: 'completed' })
     trfForm.reset({ date: today })
@@ -287,6 +337,22 @@ export default function AddTransactionModal({
     setTagInput('')
   }
 
+  const applyExpensePreset = (label: string, hints: string[]) => {
+    expForm.setValue('description', label, { shouldDirty: true, shouldValidate: true })
+    const matchedCategory = findCategoryByHints(expenseCategories, hints)
+    if (matchedCategory) {
+      expForm.setValue('category_id', matchedCategory, { shouldDirty: true })
+    }
+  }
+
+  const applyIncomePreset = (label: string, hints: string[]) => {
+    incForm.setValue('description', label, { shouldDirty: true, shouldValidate: true })
+    const matchedCategory = findCategoryByHints(incomeCategories, hints)
+    if (matchedCategory) {
+      incForm.setValue('category_id', matchedCategory, { shouldDirty: true })
+    }
+  }
+
   const tabs: { key: TabType; label: string }[] = [
     { key: 'expense', label: 'Gasto' },
     { key: 'income', label: 'Receita' },
@@ -307,7 +373,7 @@ export default function AddTransactionModal({
   ]
 
   return (
-    <Modal open={open} onClose={onClose} title={isEditing ? 'Editar movimentação' : 'Nova Transação'} size="md">
+    <Modal open={open} onClose={onClose} title={isEditing ? 'Editar movimentação' : 'Nova Transação'} size="lg">
       {!isEditing && allowTypeSwitch && (
         <div className="mb-5 flex gap-2">
           {tabs.map(t => (
@@ -329,6 +395,22 @@ export default function AddTransactionModal({
 
       {tab === 'expense' && (
         <form onSubmit={expForm.handleSubmit(onSubmitExpense)} className="space-y-4">
+          <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Lançamentos rápidos do dia a dia</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {EXPENSE_PRESETS.map(preset => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => applyExpensePreset(preset.label, preset.hints)}
+                  className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-medium text-violet-700 transition-colors hover:border-violet-300 hover:bg-violet-100"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Input label="Descrição" error={expForm.formState.errors.description?.message} {...expForm.register('description')} />
 
           <div className="grid grid-cols-2 gap-3">
@@ -346,103 +428,115 @@ export default function AddTransactionModal({
 
           <Select label="Categoria" options={expenseCategories} placeholder="Selecione..." {...expForm.register('category_id')} />
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Tipo de gasto</label>
-            <div className="flex flex-wrap gap-2">
-              {EXPENSE_TYPES.map(et => (
-                <button
-                  key={et.value}
-                  type="button"
-                  onClick={() => expForm.setValue('expense_type', et.value as any)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    expenseType === et.value
-                      ? 'border-violet-600 bg-violet-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
-                  )}
-                >
-                  {et.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedExpense(v => !v)}
+            className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <span>Mais opções (status, parcelamento, tags)</span>
+            {showAdvancedExpense ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
-            <div className="flex gap-2">
-              {STATUSES.map(s => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => expForm.setValue('status', s.value as any)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    expenseStatus === s.value
-                      ? 'border-violet-600 bg-violet-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-            <label className="text-sm font-medium text-gray-700">Parcelado?</label>
-            <button
-              type="button"
-              onClick={() => expForm.setValue('is_installment', !isInstallment)}
-              className={cn('relative h-6 w-10 rounded-full transition-colors', isInstallment ? 'bg-violet-600' : 'bg-gray-300')}
-            >
-              <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', isInstallment ? 'left-0.5 translate-x-4' : 'left-0.5')} />
-            </button>
-          </div>
-
-          {isInstallment && (
-            <Input label="Número de parcelas" type="number" min={2} max={60} {...expForm.register('installment_total')} />
-          )}
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Tags</label>
-            <div className="flex gap-2">
-              <input
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                placeholder="Pressione Enter para adicionar"
-                className="h-9 flex-1 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>+
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
-                    {tag}
-                    <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
-                  </span>
-                ))}
+          {showAdvancedExpense && (
+            <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Tipo de gasto</label>
+                <div className="flex flex-wrap gap-2">
+                  {EXPENSE_TYPES.map(et => (
+                    <button
+                      key={et.value}
+                      type="button"
+                      onClick={() => expForm.setValue('expense_type', et.value as any)}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                        expenseType === et.value
+                          ? 'border-violet-600 bg-violet-600 text-white'
+                          : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
+                      )}
+                    >
+                      {et.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Observação</label>
-            <textarea
-              rows={2}
-              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-              {...expForm.register('notes')}
-            />
-          </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {STATUSES.map(s => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => expForm.setValue('status', s.value as any)}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                        expenseStatus === s.value
+                          ? 'border-violet-600 bg-violet-600 text-white'
+                          : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <Input label="Data de competência (opcional)" type="date" {...expForm.register('competence_date')} />
+              <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                <label className="text-sm font-medium text-gray-700">Parcelado?</label>
+                <button
+                  type="button"
+                  onClick={() => expForm.setValue('is_installment', !isInstallment)}
+                  className={cn('relative h-6 w-10 rounded-full transition-colors', isInstallment ? 'bg-violet-600' : 'bg-gray-300')}
+                >
+                  <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', isInstallment ? 'left-0.5 translate-x-4' : 'left-0.5')} />
+                </button>
+              </div>
+
+              {isInstallment && (
+                <Input label="Número de parcelas" type="number" min={2} max={60} {...expForm.register('installment_total')} />
+              )}
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Tags</label>
+                <div className="flex gap-2">
+                  <input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addTag()
+                      }
+                    }}
+                    placeholder="Pressione Enter para adicionar"
+                    className="h-9 flex-1 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag}>+</Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {tags.map(tag => (
+                      <span key={tag} className="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
+                        {tag}
+                        <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Observação</label>
+                <textarea
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  {...expForm.register('notes')}
+                />
+              </div>
+
+              <Input label="Data de competência (opcional)" type="date" {...expForm.register('competence_date')} />
+            </div>
+          )}
 
           <Button type="submit" fullWidth loading={createTx.isPending || updateTx.isPending}>
             {isEditing ? 'Salvar alterações' : 'Salvar gasto'}
@@ -452,6 +546,22 @@ export default function AddTransactionModal({
 
       {tab === 'income' && (
         <form onSubmit={incForm.handleSubmit(onSubmitIncome)} className="space-y-4">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Entradas rápidas</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {INCOME_PRESETS.map(preset => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => applyIncomePreset(preset.label, preset.hints)}
+                  className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Input label="Descrição" error={incForm.formState.errors.description?.message} {...incForm.register('description')} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Valor (R$)" type="number" step="0.01" error={incForm.formState.errors.amount?.message} {...incForm.register('amount')} />
@@ -467,64 +577,77 @@ export default function AddTransactionModal({
           />
           <Select label="Categoria" options={incomeCategories} placeholder="Selecione..." {...incForm.register('category_id')} />
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
-            <div className="flex gap-2">
-              {STATUSES.map(s => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => incForm.setValue('status', s.value as any)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    incStatus === s.value
-                      ? 'border-violet-600 bg-violet-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedIncome(v => !v)}
+            className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <span>Mais opções (status, tags e observação)</span>
+            {showAdvancedIncome ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Tags</label>
-            <div className="flex gap-2">
-              <input
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                placeholder="Pressione Enter para adicionar"
-                className="h-9 flex-1 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addTag}>+</Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
-                    {tag}
-                    <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
-                  </span>
-                ))}
+          {showAdvancedIncome && (
+            <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {STATUSES.map(s => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => incForm.setValue('status', s.value as any)}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                        incStatus === s.value
+                          ? 'border-violet-600 bg-violet-600 text-white'
+                          : 'border-gray-300 bg-white text-gray-600 hover:border-violet-400'
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Observação</label>
-            <textarea
-              rows={2}
-              className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-              {...incForm.register('notes')}
-            />
-          </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Tags</label>
+                <div className="flex gap-2">
+                  <input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addTag()
+                      }
+                    }}
+                    placeholder="Pressione Enter para adicionar"
+                    className="h-9 flex-1 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag}>+</Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {tags.map(tag => (
+                      <span key={tag} className="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
+                        {tag}
+                        <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Observação</label>
+                <textarea
+                  rows={2}
+                  className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  {...incForm.register('notes')}
+                />
+              </div>
+            </div>
+          )}
 
           <Button type="submit" fullWidth loading={createTx.isPending || updateTx.isPending}>
             {isEditing ? 'Salvar alterações' : 'Salvar receita'}
