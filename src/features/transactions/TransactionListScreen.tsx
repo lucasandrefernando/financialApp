@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   type LucideIcon,
   ArrowDownLeft,
@@ -13,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTransactions, useDeleteTransaction, useTransactionsSummary } from '../../hooks/api/useTransactions'
+import { transactionsService } from '../../services/transactions'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, formatDate, formatMonth } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
@@ -112,6 +114,12 @@ function getMonthDateRange(year: number, month: number) {
   return { firstDay, endDay }
 }
 
+function getPreviousDay(date: string) {
+  const d = new Date(`${date}T12:00:00`)
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function TransactionListScreen() {
   const { selectedMonth } = useAppStore()
   const monthDateRange = useMemo(
@@ -167,6 +175,17 @@ export default function TransactionListScreen() {
 
   const { data, isLoading, isFetching } = useTransactions(queryFilters)
   const { data: summaryData } = useTransactionsSummary(selectedMonth.year, selectedMonth.month)
+  const previousDayOfMonth = useMemo(() => getPreviousDay(monthDateRange.firstDay), [monthDateRange.firstDay])
+  const { data: openingTransactionsData } = useQuery({
+    queryKey: ['transactions', 'opening-balance-fallback', selectedMonth.year, selectedMonth.month],
+    queryFn: () =>
+      transactionsService.list({
+        date_to: previousDayOfMonth,
+        status: 'completed',
+        page: 1,
+        limit: 10000,
+      }),
+  })
   const deleteTx = useDeleteTransaction()
 
   const pageTransactions = useMemo(() => normalizeTransactions(data), [data])
@@ -223,14 +242,37 @@ export default function TransactionListScreen() {
       expenses?: number
       balance?: number
       month_balance?: number
+      opening_balance?: number
     } | undefined
+
+    const fallbackOpeningTransactions = normalizeTransactions(openingTransactionsData)
+    const fallbackOpeningBalance = fallbackOpeningTransactions.reduce((acc, tx) => {
+      const amount = toAmount(tx.amount)
+      if (tx.type === 'income') return acc + amount
+      if (tx.type === 'expense') return acc - amount
+      return acc
+    }, 0)
+
+    const income = Number(safeSummary?.income ?? 0)
+    const expenses = Number(safeSummary?.expenses ?? 0)
+    const hasServerAccumulatedFields = safeSummary?.month_balance !== undefined || safeSummary?.opening_balance !== undefined
+    const monthBalance = hasServerAccumulatedFields
+      ? Number(safeSummary?.month_balance ?? income - expenses)
+      : income - expenses
+    const openingBalance = hasServerAccumulatedFields
+      ? Number(safeSummary?.opening_balance ?? 0)
+      : fallbackOpeningBalance
+    const balance = hasServerAccumulatedFields
+      ? Number(safeSummary?.balance ?? openingBalance + monthBalance)
+      : openingBalance + monthBalance
+
     return {
-      income: Number(safeSummary?.income ?? 0),
-      expenses: Number(safeSummary?.expenses ?? 0),
-      balance: Number(safeSummary?.balance ?? 0),
-      monthBalance: Number(safeSummary?.month_balance ?? 0),
+      income,
+      expenses,
+      balance,
+      monthBalance,
     }
-  }, [summaryData])
+  }, [summaryData, openingTransactionsData])
 
   const monthLabel = formatMonth(selectedMonth.year, selectedMonth.month)
   const initialLoading = isLoading && page === 1 && visibleTransactions.length === 0

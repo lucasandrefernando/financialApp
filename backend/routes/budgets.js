@@ -1,9 +1,8 @@
 import { Router } from 'express'
 import pool from '../db.js'
-import { requireAuth } from '../middleware/auth.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 
 const router = Router()
-router.use(requireAuth)
 
 // Helper: get current spending for a budget's period
 async function getCurrentSpending(userId, categoryId, period) {
@@ -53,8 +52,12 @@ async function getCurrentSpending(userId, categoryId, period) {
 }
 
 // GET /api/budgets
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
+    if (!req.userId) {
+      return res.json({ data: [] })
+    }
+
     const [rows] = await pool.query(
       `SELECT b.*, c.name AS category_name, c.color AS category_color, c.icon AS category_icon
        FROM budgets b
@@ -86,6 +89,8 @@ router.get('/', async (req, res) => {
     return res.status(500).json({ error: 'Erro interno do servidor' })
   }
 })
+
+router.use(requireAuth)
 
 // POST /api/budgets
 router.post('/', async (req, res) => {

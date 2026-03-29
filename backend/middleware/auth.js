@@ -13,3 +13,17 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Token inválido ou expirado' })
   }
 }
+
+export function optionalAuth(req, _res, next) {
+  const auth = req.headers.authorization
+  if (!auth?.startsWith('Bearer ')) return next()
+
+  try {
+    const payload = verifyAccessToken(auth.slice(7))
+    req.userId = payload.userId
+  } catch {
+    req.userId = null
+  }
+
+  next()
+}

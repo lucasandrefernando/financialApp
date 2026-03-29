@@ -114,6 +114,25 @@ const STATIC_DIR = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
   ? path.join(__dirname, 'public')
   : path.join(__dirname, 'dist')
 
+function sendFavicon(_, res) {
+  const candidates = [
+    path.join(__dirname, 'public', 'favicon.svg'),
+    path.join(__dirname, 'dist', 'favicon.svg'),
+  ]
+
+  const found = candidates.find(filePath => fs.existsSync(filePath))
+  if (!found) {
+    return res.status(404).send('favicon not found')
+  }
+
+  return res.sendFile(found)
+}
+
+app.get('/favicon.svg', sendFavicon)
+if (BASE_PATH !== '/') {
+  app.get(`${BASE_PATH}/favicon.svg`, sendFavicon)
+}
+
 app.use(express.static(STATIC_DIR))
 if (BASE_PATH !== '/') {
   app.use(BASE_PATH, express.static(STATIC_DIR))
