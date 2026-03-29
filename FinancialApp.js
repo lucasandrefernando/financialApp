@@ -61,9 +61,29 @@ function mountApiRoutes(prefix = '') {
   app.use(`${routePrefix}/api/onboarding`, onboardingRoutes)
 }
 
+function mountMediaRoutes(prefix = '') {
+  const routePrefix = prefix === '/' ? '' : prefix
+
+  app.get(`${routePrefix}/api/media/:file`, (req, res) => {
+    const filename = path.basename(String(req.params.file || ''))
+    const filePath = path.join(STATIC_DIR, 'img', filename)
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Arquivo nao encontrado' })
+    }
+
+    return res.sendFile(filePath)
+  })
+}
+
 mountApiRoutes('/')
 if (BASE_PATH !== '/') {
   mountApiRoutes(BASE_PATH)
+}
+
+mountMediaRoutes('/')
+if (BASE_PATH !== '/') {
+  mountMediaRoutes(BASE_PATH)
 }
 
 if (BASE_PATH !== '/') {

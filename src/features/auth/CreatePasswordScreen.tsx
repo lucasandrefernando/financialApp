@@ -30,12 +30,19 @@ type AlertState = {
   onConfirm?: () => void
 } | null
 
+function normalizeBasePath(value: string | undefined) {
+  if (!value || value === '/') return ''
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
 export default function CreatePasswordScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const status = searchParams.get('status') || ''
-  const heroImageSrc = `${import.meta.env.BASE_URL}img/login-03.jpg`
+  const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
+  const heroImageSrc = `${appBasePath}/api/media/login-03.jpg`
 
   const [alert, setAlert] = useState<AlertState>(null)
 

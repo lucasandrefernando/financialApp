@@ -14,6 +14,12 @@ function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
 }
 
+function normalizeBasePath(value: string | undefined) {
+  if (!value || value === '/') return ''
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.replace(/\/+$/, '')
+}
+
 function isValidCpf(value: string) {
   const cpf = onlyDigits(value)
   if (cpf.length !== 11) return false
@@ -54,7 +60,8 @@ type AlertState = {
 export default function RegisterScreen() {
   const navigate = useNavigate()
   const [alert, setAlert] = useState<AlertState>(null)
-  const heroImageSrc = `${import.meta.env.BASE_URL}img/login-02.jpg`
+  const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
+  const heroImageSrc = `${appBasePath}/api/media/login-02.jpg`
 
   const {
     register,
