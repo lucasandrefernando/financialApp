@@ -6,6 +6,8 @@ import { ToastContainer } from './components/ui/Toast'
 import LoginScreen from './features/auth/LoginScreen'
 import GoogleAuthCallbackScreen from './features/auth/GoogleAuthCallbackScreen'
 import RegisterScreen from './features/auth/RegisterScreen'
+import CreatePasswordScreen from './features/auth/CreatePasswordScreen'
+import CompleteProfileScreen from './features/auth/CompleteProfileScreen'
 import ForgotPasswordScreen from './features/auth/ForgotPasswordScreen'
 import ResetPasswordScreen from './features/auth/ResetPasswordScreen'
 import OnboardingWizard from './features/onboarding/OnboardingWizard'
@@ -35,7 +37,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   )
   if (!user) return <Navigate to="/login" replace />
+  if (!user.cpf || !String(user.cpf).trim()) return <Navigate to="/complete-profile" replace />
   if (!user.onboarding_completed) return <Navigate to="/onboarding" replace />
+  return <>{children}</>
+}
+
+function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuthStore()
+  if (isLoading) return null
+  if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
@@ -48,6 +58,8 @@ export default function App() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/auth/callback" element={<GoogleAuthCallbackScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
+        <Route path="/create-password" element={<CreatePasswordScreen />} />
+        <Route path="/complete-profile" element={<AuthenticatedRoute><CompleteProfileScreen /></AuthenticatedRoute>} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/reset-password" element={<ResetPasswordScreen />} />
         <Route path="/onboarding" element={<OnboardingWizard />} />

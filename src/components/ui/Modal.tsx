@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils'
 interface ModalProps {
   open: boolean
   onClose: () => void
-  title: string
+  title: ReactNode
   children: ReactNode
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg'
@@ -31,9 +31,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 modal-backdrop-enter" onClick={onClose} />
       <div className={cn(
-        'relative w-full bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden',
+        'relative w-full bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden modal-panel-enter',
         'max-h-[90vh] flex flex-col',
         sizeMap[size]
       )}>

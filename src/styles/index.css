@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -12,6 +12,16 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
+.modal-backdrop-enter {
+  animation: modal-backdrop-fade 180ms ease-out both;
+}
+
+.modal-panel-enter {
+  animation: modal-panel-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
 /* Autofill fix */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
@@ -20,9 +30,30 @@ input:-webkit-autofill:focus {
   -webkit-text-fill-color: #111827;
 }
 
+@keyframes modal-backdrop-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .modal-backdrop-enter,
+  .modal-panel-enter {
+    animation: none !important;
   }
 }

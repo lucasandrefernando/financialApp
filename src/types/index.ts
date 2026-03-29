@@ -1,7 +1,9 @@
 export interface User {
   id: number
   name: string
+  cpf?: string | null
   email: string
+  email_verified?: boolean
   avatar_url?: string
   currency: string
   locale: string

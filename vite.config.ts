@@ -18,7 +18,7 @@ const BASE_PATH = normalizeBasePath(
 
 export default defineConfig({
   base: BASE_PATH,
-  publicDir: false,
+  publicDir: 'public',
   plugins: [react(), viteSingleFile()],
   resolve: {
     alias: {

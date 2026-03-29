@@ -12,10 +12,19 @@ export async function login(email: string, password: string) {
   return data.user as User
 }
 
-export async function register(name: string, email: string, password: string) {
-  const { data } = await api.post('/api/auth/register', { name, email, password })
-  persistAuthTokens(data.access_token, data.refresh_token)
-  return data.user as User
+export async function register(name: string, cpf: string, email: string) {
+  const { data } = await api.post('/api/auth/register', { name, cpf, email })
+  return data as { message: string }
+}
+
+export async function createPassword(token: string, password: string) {
+  const { data } = await api.post('/api/auth/create-password', { token, password })
+  return data as { message: string }
+}
+
+export async function completeMyProfile(name: string, cpf: string) {
+  const { data } = await api.put('/api/auth/me', { name, cpf })
+  return data as User
 }
 
 export async function getMe(): Promise<User> {

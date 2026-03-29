@@ -1,4 +1,4 @@
-import { Router } from 'express'
+﻿import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import pool from '../db.js'
@@ -8,12 +8,89 @@ import {
   verifyRefreshToken,
 } from '../utils/jwt.js'
 import { requireAuth } from '../middleware/auth.js'
-import { sendPasswordResetEmail } from '../utils/mailer.js'
+import { sendEmailVerificationEmail, sendPasswordResetEmail } from '../utils/mailer.js'
 
 const router = Router()
 const GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
+let authSchemaReady = false
+
+function onlyDigits(value) {
+  return String(value || '').replace(/\D/g, '')
+}
+
+function formatCpf(cpf) {
+  const d = onlyDigits(cpf)
+  if (d.length !== 11) return ''
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
+function isValidCpf(cpf) {
+  const d = onlyDigits(cpf)
+  if (d.length !== 11) return false
+  if (/^(\d)\1+$/.test(d)) return false
+
+  let sum = 0
+  for (let i = 0; i < 9; i += 1) sum += Number(d[i]) * (10 - i)
+  let check = (sum * 10) % 11
+  if (check === 10) check = 0
+  if (check !== Number(d[9])) return false
+
+  sum = 0
+  for (let i = 0; i < 10; i += 1) sum += Number(d[i]) * (11 - i)
+  check = (sum * 10) % 11
+  if (check === 10) check = 0
+  return check === Number(d[10])
+}
+
+async function ensureAuthSchema() {
+  if (authSchemaReady) return
+
+  const [columns] = await pool.query('SHOW COLUMNS FROM users')
+  const fields = new Set(columns.map(c => c.Field))
+
+  if (!fields.has('cpf')) {
+    await pool.query('ALTER TABLE users ADD COLUMN cpf VARCHAR(14) NULL AFTER email')
+  }
+  if (!fields.has('email_verified')) {
+    await pool.query('ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER password_hash')
+  }
+  if (!fields.has('email_verification_token')) {
+    await pool.query('ALTER TABLE users ADD COLUMN email_verification_token VARCHAR(255) NULL')
+  }
+  if (!fields.has('email_verification_expires')) {
+    await pool.query('ALTER TABLE users ADD COLUMN email_verification_expires DATETIME NULL')
+  }
+  if (!fields.has('password_setup_token')) {
+    await pool.query('ALTER TABLE users ADD COLUMN password_setup_token VARCHAR(255) NULL')
+  }
+  if (!fields.has('password_setup_expires')) {
+    await pool.query('ALTER TABLE users ADD COLUMN password_setup_expires DATETIME NULL')
+  }
+  if (!fields.has('reset_token')) {
+    await pool.query('ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) NULL')
+  }
+  if (!fields.has('reset_token_expires')) {
+    await pool.query('ALTER TABLE users ADD COLUMN reset_token_expires DATETIME NULL')
+  }
+
+  const passwordHashColumn = columns.find(c => c.Field === 'password_hash')
+  if (passwordHashColumn && passwordHashColumn.Null === 'NO') {
+    await pool.query('ALTER TABLE users MODIFY COLUMN password_hash VARCHAR(255) NULL')
+  }
+
+  // Preserve access for legacy accounts that already had a password before verification flow existed.
+  await pool.query(
+    `UPDATE users
+     SET email_verified = 1
+     WHERE password_hash IS NOT NULL
+       AND (email_verified = 0 OR email_verified IS NULL)
+       AND deleted_at IS NULL`
+  )
+
+  authSchemaReady = true
+}
 
 function normalizeBasePath(value) {
   if (!value || value === '/') return ''
@@ -46,6 +123,13 @@ function buildAuthCallbackRedirect(fragment = '') {
   return `${appUrl}${callbackPath}${fragment}`
 }
 
+function buildCreatePasswordRedirect(query = '') {
+  const appUrl = getPublicAppUrl()
+  const target = `/create-password${query}`
+  if (!appUrl) return target
+  return `${appUrl}${target}`
+}
+
 async function createSessionTokens(userId) {
   const accessToken = generateAccessToken(userId)
   const refreshToken = generateRefreshToken(userId)
@@ -60,54 +144,72 @@ async function createSessionTokens(userId) {
   return { accessToken, refreshToken }
 }
 
+router.use(async (req, res, next) => {
+  try {
+    await ensureAuthSchema()
+    next()
+  } catch (err) {
+    console.error('ensure auth schema error', err)
+    res.status(500).json({ error: 'Erro ao preparar autenticação' })
+  }
+})
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, currency, locale, timezone } = req.body
+    const { name, cpf, email, currency, locale, timezone } = req.body
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' })
+    if (!name || !cpf || !email) {
+      return res.status(400).json({ error: 'Nome, CPF e e-mail são obrigatórios' })
     }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' })
+    if (!isValidCpf(cpf)) {
+      return res.status(400).json({ error: 'CPF inválido' })
     }
+    const formattedCpf = formatCpf(cpf)
 
     const [existing] = await pool.query(
       'SELECT id FROM users WHERE email = ? AND deleted_at IS NULL',
       [email]
     )
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'Este email já está em uso' })
+      return res.status(409).json({ error: 'Este e-mail já está em uso' })
     }
 
-    const password_hash = await bcrypt.hash(password, 10)
+    const [existingCpf] = await pool.query(
+      'SELECT id FROM users WHERE cpf = ? AND deleted_at IS NULL',
+      [formattedCpf]
+    )
+    if (existingCpf.length > 0) {
+      return res.status(409).json({ error: 'Este CPF já está em uso' })
+    }
 
-    const [result] = await pool.query(
-      `INSERT INTO users (name, email, password_hash, currency, locale, timezone)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+    const verificationToken = randomBytes(32).toString('hex')
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+    await pool.query(
+      `INSERT INTO users (
+         name, cpf, email, password_hash, email_verified,
+         email_verification_token, email_verification_expires, currency, locale, timezone
+       )
+       VALUES (?, ?, ?, NULL, 0, ?, ?, ?, ?, ?)`,
       [
         name,
+        formattedCpf,
         email,
-        password_hash,
+        verificationToken,
+        verificationExpires,
         currency || 'BRL',
         locale || 'pt-BR',
         timezone || 'America/Sao_Paulo',
       ]
     )
 
-    const userId = result.insertId
-    const { accessToken, refreshToken } = await createSessionTokens(userId)
-
-    const [users] = await pool.query(
-      'SELECT id, name, email, avatar_url, currency, locale, timezone, onboarding_completed, created_at FROM users WHERE id = ?',
-      [userId]
-    )
+    const appUrl = (req.headers.origin || process.env.APP_URL || getPublicAppUrl() || '').replace(/\/+$/, '')
+    await sendEmailVerificationEmail(email, verificationToken, appUrl, getAppBasePath())
 
     return res.status(201).json({
       data: {
-        user: users[0],
-        access_token: accessToken,
-        refresh_token: refreshToken,
+        message: 'Cadastro iniciado. Enviamos um e-mail para você confirmar sua conta.',
       },
     })
   } catch (err) {
@@ -122,7 +224,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email e senha são obrigatórios' })
+      return res.status(400).json({ error: 'E-mail e senha são obrigatórios' })
     }
 
     const [users] = await pool.query(
@@ -131,18 +233,34 @@ router.post('/login', async (req, res) => {
     )
 
     if (users.length === 0) {
-      return res.status(401).json({ error: 'Email ou senha incorretos' })
+      return res.status(401).json({ error: 'E-mail ou senha incorretos' })
     }
 
     const user = users[0]
+    if (!user.email_verified) {
+      return res.status(403).json({
+        error: 'Sua conta ainda não foi verificada. Confira seu e-mail para continuar.',
+      })
+    }
+    if (!user.password_hash) {
+      return res.status(403).json({
+        error: 'Defina sua senha primeiro usando o link de confirmação enviado por e-mail.',
+      })
+    }
+
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) {
-      return res.status(401).json({ error: 'Email ou senha incorretos' })
+      return res.status(401).json({ error: 'E-mail ou senha incorretos' })
     }
 
     const { accessToken, refreshToken } = await createSessionTokens(user.id)
-
-    const { password_hash, ...safeUser } = user
+    const [safeUserRows] = await pool.query(
+      `SELECT id, name, cpf, email, email_verified, avatar_url, currency, locale, timezone,
+              onboarding_completed, created_at, updated_at
+       FROM users WHERE id = ?`,
+      [user.id]
+    )
+    const safeUser = safeUserRows[0]
 
     return res.json({
       data: {
@@ -165,7 +283,7 @@ router.get('/google/start', async (req, res) => {
 
     if (!clientId || !redirectUri) {
       return res.status(500).json({
-        error: 'Google OAuth nao configurado. Defina GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI/APP_URL.',
+        error: 'Google OAuth não configurado. Defina GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI/APP_URL.',
       })
     }
 
@@ -243,22 +361,27 @@ router.get('/google/callback', async (req, res) => {
     )
 
     let userId
+    let needsProfileCompletion = false
     if (existingUsers.length > 0) {
       userId = existingUsers[0].id
-      await pool.query('UPDATE users SET name = ?, avatar_url = ? WHERE id = ?', [
-        profile.name || existingUsers[0].name || 'Usuario Google',
-        profile.picture || existingUsers[0].avatar_url || null,
-        userId,
-      ])
+      const finalName = profile.name || existingUsers[0].name || 'Usuário Google'
+      const finalAvatar = profile.picture || existingUsers[0].avatar_url || null
+      await pool.query(
+        `UPDATE users
+         SET name = ?, avatar_url = ?, email_verified = 1, updated_at = NOW()
+         WHERE id = ?`,
+        [finalName, finalAvatar, userId]
+      )
+      if (!existingUsers[0].cpf || !String(existingUsers[0].cpf).trim()) {
+        needsProfileCompletion = true
+      }
     } else {
-      const generatedPasswordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10)
       const [insertResult] = await pool.query(
-        `INSERT INTO users (name, email, password_hash, avatar_url, currency, locale, timezone)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO users (name, email, password_hash, cpf, avatar_url, email_verified, currency, locale, timezone)
+         VALUES (?, ?, NULL, NULL, ?, 1, ?, ?, ?)`,
         [
-          profile.name || profile.email.split('@')[0] || 'Usuario Google',
+          profile.name || profile.email.split('@')[0] || 'Usuário Google',
           profile.email,
-          generatedPasswordHash,
           profile.picture || null,
           'BRL',
           'pt-BR',
@@ -266,14 +389,103 @@ router.get('/google/callback', async (req, res) => {
         ]
       )
       userId = insertResult.insertId
+      needsProfileCompletion = true
     }
 
     const { accessToken, refreshToken } = await createSessionTokens(userId)
-    const fragment = `#access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`
+    const fragment = `#access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&needs_profile=${needsProfileCompletion ? '1' : '0'}`
     return res.redirect(buildAuthCallbackRedirect(fragment))
   } catch (err) {
     console.error('google callback error', err)
     return res.redirect(buildAuthCallbackRedirect('#error=google_unexpected'))
+  }
+})
+
+// GET /api/auth/verify-email
+router.get('/verify-email', async (req, res) => {
+  try {
+    const token = String(req.query.token || '')
+    if (!token) {
+      return res.redirect(buildCreatePasswordRedirect('?status=token_missing'))
+    }
+
+    const [users] = await pool.query(
+      `SELECT id
+       FROM users
+       WHERE email_verification_token = ?
+         AND email_verification_expires > NOW()
+         AND deleted_at IS NULL`,
+      [token]
+    )
+
+    if (users.length === 0) {
+      return res.redirect(buildCreatePasswordRedirect('?status=token_invalid'))
+    }
+
+    const passwordSetupToken = randomBytes(32).toString('hex')
+    const passwordSetupExpires = new Date(Date.now() + 2 * 60 * 60 * 1000)
+
+    await pool.query(
+      `UPDATE users
+       SET email_verified = 1,
+           email_verification_token = NULL,
+           email_verification_expires = NULL,
+           password_setup_token = ?,
+           password_setup_expires = ?,
+           updated_at = NOW()
+       WHERE id = ?`,
+      [passwordSetupToken, passwordSetupExpires, users[0].id]
+    )
+
+    return res.redirect(
+      buildCreatePasswordRedirect(`?token=${encodeURIComponent(passwordSetupToken)}&status=verified`)
+    )
+  } catch (err) {
+    console.error('verify-email error', err)
+    return res.redirect(buildCreatePasswordRedirect('?status=unexpected_error'))
+  }
+})
+
+// POST /api/auth/create-password
+router.post('/create-password', async (req, res) => {
+  try {
+    const { token, password } = req.body || {}
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token e senha são obrigatórios' })
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' })
+    }
+
+    const [users] = await pool.query(
+      `SELECT id
+       FROM users
+       WHERE password_setup_token = ?
+         AND password_setup_expires > NOW()
+         AND deleted_at IS NULL`,
+      [token]
+    )
+
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'Link inválido ou expirado' })
+    }
+
+    const passwordHash = await bcrypt.hash(String(password), 10)
+    await pool.query(
+      `UPDATE users
+       SET password_hash = ?,
+           password_setup_token = NULL,
+           password_setup_expires = NULL,
+           updated_at = NOW()
+       WHERE id = ?`,
+      [passwordHash, users[0].id]
+    )
+
+    return res.json({ data: { message: 'Senha criada com sucesso. Faça login para continuar.' } })
+  } catch (err) {
+    console.error('create-password error', err)
+    return res.status(500).json({ error: 'Erro interno do servidor' })
   }
 })
 
@@ -327,7 +539,7 @@ router.post('/logout', async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const [users] = await pool.query(
-      `SELECT id, name, email, avatar_url, currency, locale, timezone,
+      `SELECT id, name, cpf, email, email_verified, avatar_url, currency, locale, timezone,
               onboarding_completed, created_at, updated_at
        FROM users WHERE id = ? AND deleted_at IS NULL`,
       [req.userId]
@@ -345,15 +557,34 @@ router.get('/me', requireAuth, async (req, res) => {
 // PUT /api/auth/me
 router.put('/me', requireAuth, async (req, res) => {
   try {
-    const { name, currency, locale, timezone, avatar_url } = req.body || {}
+    const { name, cpf, currency, locale, timezone, avatar_url } = req.body || {}
 
     const fields = []
     const values = []
 
     if (typeof name === 'string') {
-      if (!name.trim()) return res.status(400).json({ error: 'Nome e obrigatorio' })
+      if (!name.trim()) return res.status(400).json({ error: 'Nome é obrigatório' })
       fields.push('name = ?')
       values.push(name.trim())
+    }
+    if (typeof cpf === 'string') {
+      const normalized = cpf.trim()
+      if (!normalized) {
+        return res.status(400).json({ error: 'CPF é obrigatório' })
+      }
+      if (!isValidCpf(normalized)) {
+        return res.status(400).json({ error: 'CPF inválido' })
+      }
+      const formatted = formatCpf(normalized)
+      const [duplicatedCpf] = await pool.query(
+        'SELECT id FROM users WHERE cpf = ? AND id <> ? AND deleted_at IS NULL',
+        [formatted, req.userId]
+      )
+      if (duplicatedCpf.length > 0) {
+        return res.status(409).json({ error: 'Este CPF já está em uso' })
+      }
+      fields.push('cpf = ?')
+      values.push(formatted)
     }
     if (typeof currency === 'string' && currency.trim()) {
       fields.push('currency = ?')
@@ -385,14 +616,14 @@ router.put('/me', requireAuth, async (req, res) => {
     )
 
     const [users] = await pool.query(
-      `SELECT id, name, email, avatar_url, currency, locale, timezone,
+      `SELECT id, name, cpf, email, email_verified, avatar_url, currency, locale, timezone,
               onboarding_completed, created_at, updated_at
        FROM users WHERE id = ? AND deleted_at IS NULL`,
       [req.userId]
     )
 
     if (users.length === 0) {
-      return res.status(404).json({ error: 'Usuario nao encontrado' })
+      return res.status(404).json({ error: 'Usuário não encontrado' })
     }
 
     return res.json({ data: users[0] })
@@ -415,7 +646,7 @@ router.delete('/me', requireAuth, async (req, res) => {
     if (users.length === 0) {
       await conn.rollback()
       conn.release()
-      return res.status(404).json({ error: 'Usuario nao encontrado' })
+      return res.status(404).json({ error: 'Usuário não encontrado' })
     }
 
     const currentUser = users[0]
@@ -452,7 +683,7 @@ router.delete('/me', requireAuth, async (req, res) => {
     await conn.commit()
     conn.release()
 
-    return res.json({ data: { message: 'Conta excluida com sucesso' } })
+    return res.json({ data: { message: 'Conta excluída com sucesso' } })
   } catch (err) {
     await conn.rollback()
     conn.release()
@@ -465,16 +696,16 @@ router.delete('/me', requireAuth, async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body
-    if (!email) return res.status(400).json({ error: 'Email é obrigatório' })
+    if (!email) return res.status(400).json({ error: 'E-mail é obrigatório' })
 
     const [users] = await pool.query(
-      'SELECT id FROM users WHERE email = ? AND deleted_at IS NULL',
+      'SELECT id FROM users WHERE email = ? AND email_verified = 1 AND password_hash IS NOT NULL AND deleted_at IS NULL',
       [email]
     )
 
     // Always return success to not leak whether email exists
     if (users.length === 0) {
-      return res.json({ data: { message: 'Se o email existir, você receberá um link em breve.' } })
+      return res.json({ data: { message: 'Se o e-mail existir, você receberá um link em breve.' } })
     }
 
     const token = randomBytes(32).toString('hex')
@@ -488,10 +719,10 @@ router.post('/forgot-password', async (req, res) => {
     const appUrl = req.headers.origin || process.env.APP_URL || 'http://localhost:5173'
     await sendPasswordResetEmail(email, token, appUrl)
 
-    return res.json({ data: { message: 'Se o email existir, você receberá um link em breve.' } })
+    return res.json({ data: { message: 'Se o e-mail existir, você receberá um link em breve.' } })
   } catch (err) {
     console.error('forgot-password error', err)
-    return res.status(500).json({ error: 'Erro ao enviar email' })
+    return res.status(500).json({ error: 'Erro ao enviar e-mail' })
   }
 })
 
@@ -532,3 +763,4 @@ router.post('/reset-password', async (req, res) => {
 })
 
 export default router
+
