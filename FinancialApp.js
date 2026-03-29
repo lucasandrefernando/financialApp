@@ -69,9 +69,14 @@ if (BASE_PATH !== '/') {
 if (BASE_PATH !== '/') {
   const baseWithSlash = `${BASE_PATH}/`
 
-  // When users open the raw host:port root, send them to the configured app base path.
-  app.get('/', (req, res) => res.redirect(302, baseWithSlash))
-  app.get(BASE_PATH, (req, res) => res.redirect(302, baseWithSlash))
+  // Avoid redirect loops behind reverse proxy (KingHost may already map /financialApp -> / internally).
+  // Redirect only when the request is made directly to the raw app port.
+  app.get('/', (req, res, next) => {
+    const host = String(req.headers.host || '')
+    const isDirectPortAccess = host.endsWith(`:${PORT}`)
+    if (!isDirectPortAccess) return next()
+    return res.redirect(302, baseWithSlash)
+  })
 }
 
 const STATIC_DIR = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
