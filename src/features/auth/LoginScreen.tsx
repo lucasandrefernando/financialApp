@@ -66,8 +66,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f7f7fb] via-[#f1f2f8] to-[#ede9fe] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <main className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_-36px_rgba(76,29,149,0.38)] lg:min-h-[720px] lg:grid-cols-[1.04fr_0.96fr]">
+    <div className="min-h-screen bg-gradient-to-br from-[#f7f7fb] via-[#f1f2f8] to-[#ede9fe] px-0 py-0 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <main className="mx-auto w-full max-w-6xl overflow-hidden bg-white lg:grid lg:min-h-[720px] lg:grid-cols-[1.04fr_0.96fr] lg:rounded-[30px] lg:border lg:border-slate-200 lg:shadow-[0_30px_80px_-36px_rgba(76,29,149,0.38)]">
         <section className="relative hidden lg:block">
           <img
             src={heroImageSrc}
@@ -92,9 +92,9 @@ export default function LoginScreen() {
           </div>
         </section>
 
-        <section className="relative flex items-center justify-center bg-white p-5 sm:p-7 lg:p-12">
+        <section className="relative flex min-h-screen items-start justify-center bg-white p-4 pt-5 sm:min-h-0 sm:items-center sm:p-7 lg:p-12">
           <div className="w-full max-w-md">
-            <div className="relative mb-6 overflow-hidden rounded-[26px] border border-violet-200/70 bg-violet-900 lg:hidden">
+            <div className="relative mb-6 overflow-hidden rounded-[24px] border border-violet-200/70 bg-violet-900 shadow-[0_20px_45px_-30px_rgba(76,29,149,0.55)] lg:hidden">
               <img
                 src={heroImageSrc}
                 alt="Pessoa organizando as finanças"
@@ -102,21 +102,21 @@ export default function LoginScreen() {
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-br from-violet-950/75 via-violet-900/55 to-purple-700/40" />
-              <div className="relative px-5 py-6">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+              <div className="relative px-5 py-5">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                   <ShieldCheck size={13} />
                   Acesso seguro
                 </div>
-                <h3 className="max-w-[17rem] text-2xl font-semibold leading-tight text-white">
+                <h3 className="max-w-[17rem] text-[1.8rem] font-semibold leading-[1.12] text-white">
                   Gestão elegante para sua rotina financeira.
                 </h3>
-                <p className="mt-2 max-w-[18rem] text-sm text-white/85">
+                <p className="mt-2 max-w-[18rem] text-[15px] text-white/85">
                   Um login rápido, limpo e com foco no que importa.
                 </p>
               </div>
             </div>
 
-            <div className="mb-7 text-center lg:mb-8">
+            <div className="mb-6 text-center lg:mb-8">
               <BrandWordmark size="sm" className="justify-center" />
               <h2 className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:text-[2.15rem] lg:text-3xl">
                 Acesse sua conta
@@ -124,7 +124,7 @@ export default function LoginScreen() {
               <p className="mt-1 text-sm text-slate-600">Entre com Google ou use seu e-mail e senha.</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_16px_50px_-42px_rgba(76,29,149,0.45)] backdrop-blur-sm sm:p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+            <div className="rounded-2xl border border-slate-200/85 bg-white/95 p-4 shadow-[0_18px_55px_-40px_rgba(76,29,149,0.45)] backdrop-blur-sm sm:p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
               <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
                 <Input
                   label="E-mail"

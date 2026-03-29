@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, LogOut } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { cn } from '../../lib/utils'
 import { BrandIcon, BrandWordmark } from '../brand/Brand'
@@ -17,7 +17,7 @@ const navItems = [
 ]
 
 export function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useAppStore()
+  const { sidebarCollapsed } = useAppStore()
   const storeLogout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -41,22 +41,12 @@ export function Sidebar() {
       'hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0',
       sidebarCollapsed ? 'w-16' : 'w-60'
     )}>
-      <div className={cn('relative flex h-16 items-center border-b border-gray-100 px-3', sidebarCollapsed ? 'justify-center' : 'justify-center')}>
+      <div className="flex h-16 items-center justify-center border-b border-gray-100 px-3">
         {sidebarCollapsed ? (
           <BrandIcon size="sm" />
         ) : (
           <BrandWordmark size="sm" className="justify-center" />
         )}
-        <button
-          onClick={toggleSidebar}
-          className={cn(
-            'absolute right-2 h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors',
-            sidebarCollapsed && 'right-1'
-          )}
-          aria-label={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
-        >
-          {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-2">
