@@ -55,6 +55,7 @@ export type TabType = 'expense' | 'income' | 'transfer'
 interface Props {
   open: boolean
   onClose: () => void
+  onSaved?: () => void
   initialTab?: TabType
   editingTransaction?: Transaction | null
   allowTypeSwitch?: boolean
@@ -131,6 +132,7 @@ const INCOME_PRESETS: Array<{ label: string; hints: string[] }> = [
 export default function AddTransactionModal({
   open,
   onClose,
+  onSaved,
   initialTab = 'expense',
   editingTransaction = null,
   allowTypeSwitch = true,
@@ -278,6 +280,7 @@ export default function AddTransactionModal({
 
       expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
       setTags([])
+      onSaved?.()
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
@@ -306,6 +309,7 @@ export default function AddTransactionModal({
 
       incForm.reset({ date: defaultDate, status: 'completed' })
       setTags([])
+      onSaved?.()
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
@@ -337,6 +341,7 @@ export default function AddTransactionModal({
       }
 
       trfForm.reset({ date: defaultDate })
+      onSaved?.()
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar transferência.'))

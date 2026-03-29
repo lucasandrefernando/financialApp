@@ -183,7 +183,7 @@ export default function TransactionListScreen() {
     [selectedMonth.year, selectedMonth.month, typeFilter, search, dateFrom, dateTo, page]
   )
 
-  const { data, isLoading, isFetching } = useTransactions(queryFilters)
+  const { data, isLoading, isFetching, refetch } = useTransactions(queryFilters)
   const { data: summaryData } = useTransactionsSummary(selectedMonth.year, selectedMonth.month)
   const previousDayOfMonth = useMemo(() => getPreviousDay(monthDateRange.firstDay), [monthDateRange.firstDay])
   const { data: openingTransactionsData } = useQuery({
@@ -294,7 +294,13 @@ export default function TransactionListScreen() {
     try {
       setDeletingId(id)
       await deleteTx.mutateAsync(id)
+      setVisibleTransactions(prev => prev.filter(tx => tx.id !== id))
       toast.success('Transação excluída.')
+      if (page === 1) {
+        await refetch()
+      } else {
+        setPage(1)
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.error ||
@@ -317,6 +323,14 @@ export default function TransactionListScreen() {
     setEditingTransaction(tx)
     setModalTab(tx.type as TabType)
     setAddOpen(true)
+  }
+
+  const refreshTransactionsAfterSave = async () => {
+    if (page === 1) {
+      await refetch()
+      return
+    }
+    setPage(1)
   }
 
   const contextAction = useMemo(() => {
@@ -673,6 +687,7 @@ export default function TransactionListScreen() {
           setAddOpen(false)
           setEditingTransaction(null)
         }}
+        onSaved={refreshTransactionsAfterSave}
         initialTab={modalTab}
         editingTransaction={editingTransaction}
         allowTypeSwitch={false}
