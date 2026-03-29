@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
@@ -16,9 +17,39 @@ import type { Transaction } from '../../types'
 
 const today = new Date().toISOString().split('T')[0]
 
+function normalizeMoneyInput(value: unknown) {
+  if (typeof value === 'number') return value
+  if (typeof value !== 'string') return value
+  const trimmed = value.trim()
+  if (!trimmed) return trimmed
+  const normalized = trimmed.replace(/\./g, '').replace(',', '.')
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : value
+}
+
+function extractFirstFormError(errors: FieldErrors<any>) {
+  const queue: any[] = [errors]
+  while (queue.length > 0) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object') continue
+
+    for (const value of Object.values(current)) {
+      if (!value) continue
+      if (typeof value === 'object' && 'message' in value && value.message) {
+        return String(value.message)
+      }
+      if (typeof value === 'object') queue.push(value)
+    }
+  }
+  return 'Verifique os campos obrigatórios.'
+}
+
 const expenseSchema = z.object({
   description: z.string().min(1, 'Descrição obrigatória'),
-  amount: z.coerce.number().positive('Valor deve ser positivo'),
+  amount: z.preprocess(
+    normalizeMoneyInput,
+    z.number({ invalid_type_error: 'Valor inválido' }).positive('Valor deve ser positivo')
+  ),
   date: z.string().min(1),
   account_id: z.coerce.number().min(1, 'Selecione a conta'),
   category_id: z.coerce.number().optional(),
@@ -33,7 +64,10 @@ const expenseSchema = z.object({
 
 const incomeSchema = z.object({
   description: z.string().min(1, 'Descrição obrigatória'),
-  amount: z.coerce.number().positive('Valor deve ser positivo'),
+  amount: z.preprocess(
+    normalizeMoneyInput,
+    z.number({ invalid_type_error: 'Valor inválido' }).positive('Valor deve ser positivo')
+  ),
   date: z.string().min(1),
   account_id: z.coerce.number().min(1, 'Selecione a conta'),
   category_id: z.coerce.number().optional(),
@@ -43,7 +77,10 @@ const incomeSchema = z.object({
 })
 
 const transferSchema = z.object({
-  amount: z.coerce.number().positive('Valor deve ser positivo'),
+  amount: z.preprocess(
+    normalizeMoneyInput,
+    z.number({ invalid_type_error: 'Valor inválido' }).positive('Valor deve ser positivo')
+  ),
   date: z.string().min(1),
   account_id: z.coerce.number().min(1, 'Selecione a conta origem'),
   transfer_to_account_id: z.coerce.number().min(1, 'Selecione a conta destino'),
@@ -412,7 +449,13 @@ export default function AddTransactionModal({
       )}
 
       {tab === 'expense' && (
-        <form onSubmit={expForm.handleSubmit(onSubmitExpense)} className="space-y-4">
+        <form
+          onSubmit={expForm.handleSubmit(
+            onSubmitExpense,
+            (errors) => toast.error(extractFirstFormError(errors))
+          )}
+          className="space-y-4"
+        >
           <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Lançamentos rápidos do dia a dia</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -432,7 +475,7 @@ export default function AddTransactionModal({
           <Input label="Descrição" error={expForm.formState.errors.description?.message} {...expForm.register('description')} />
 
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Valor (R$)" type="number" step="0.01" error={expForm.formState.errors.amount?.message} {...expForm.register('amount')} />
+            <Input label="Valor (R$)" type="text" inputMode="decimal" error={expForm.formState.errors.amount?.message} {...expForm.register('amount')} />
             <Input label="Data" type="date" error={expForm.formState.errors.date?.message} {...expForm.register('date')} />
           </div>
 
@@ -563,7 +606,13 @@ export default function AddTransactionModal({
       )}
 
       {tab === 'income' && (
-        <form onSubmit={incForm.handleSubmit(onSubmitIncome)} className="space-y-4">
+        <form
+          onSubmit={incForm.handleSubmit(
+            onSubmitIncome,
+            (errors) => toast.error(extractFirstFormError(errors))
+          )}
+          className="space-y-4"
+        >
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Entradas rápidas</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -582,7 +631,7 @@ export default function AddTransactionModal({
 
           <Input label="Descrição" error={incForm.formState.errors.description?.message} {...incForm.register('description')} />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Valor (R$)" type="number" step="0.01" error={incForm.formState.errors.amount?.message} {...incForm.register('amount')} />
+            <Input label="Valor (R$)" type="text" inputMode="decimal" error={incForm.formState.errors.amount?.message} {...incForm.register('amount')} />
             <Input label="Data" type="date" {...incForm.register('date')} />
           </div>
 
@@ -674,9 +723,15 @@ export default function AddTransactionModal({
       )}
 
       {tab === 'transfer' && (
-        <form onSubmit={trfForm.handleSubmit(onSubmitTransfer)} className="space-y-4">
+        <form
+          onSubmit={trfForm.handleSubmit(
+            onSubmitTransfer,
+            (errors) => toast.error(extractFirstFormError(errors))
+          )}
+          className="space-y-4"
+        >
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Valor (R$)" type="number" step="0.01" error={trfForm.formState.errors.amount?.message} {...trfForm.register('amount')} />
+            <Input label="Valor (R$)" type="text" inputMode="decimal" error={trfForm.formState.errors.amount?.message} {...trfForm.register('amount')} />
             <Input label="Data" type="date" {...trfForm.register('date')} />
           </div>
 
