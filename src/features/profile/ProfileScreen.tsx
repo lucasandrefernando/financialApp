@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Check, LogOut, Mail, UserRound } from 'lucide-react'
+import { AlertTriangle, Check, CheckCircle2, LogOut, Mail, UserRound } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { deleteMyAccount, logout } from '../../services/auth'
 import { sharingService } from '../../services/sharing'
@@ -26,6 +26,8 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('')
+  const [deleteAcknowledge, setDeleteAcknowledge] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [alert, setAlert] = useState<AlertState>(null)
 
@@ -52,16 +54,21 @@ export default function ProfileScreen() {
   const hasChanges = useMemo(() => name.trim() !== baselineName.trim(), [name, baselineName])
   const userInitial = (user?.name?.trim().charAt(0) || 'S').toUpperCase()
   const displayName = user?.name?.trim() || 'Sem nome'
-  const cpfLabel = user?.cpf?.trim() || 'Nao informado'
+  const cpfLabel = user?.cpf?.trim() || 'Não informado'
   const memberSince = user?.created_at
     ? new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(user.created_at))
     : '-'
+  const normalizedEmail = (user?.email || '').trim().toLowerCase()
+  const normalizedTypedEmail = deleteConfirmEmail.trim().toLowerCase()
+  const isDeleteKeywordValid = deleteConfirmText.trim().toUpperCase() === 'EXCLUIR'
+  const isDeleteEmailValid = Boolean(normalizedEmail) && normalizedTypedEmail === normalizedEmail
+  const canConfirmDelete = deleteAcknowledge && isDeleteKeywordValid && isDeleteEmailValid
 
   const handleSave = async () => {
     const cleanName = name.trim()
     if (!cleanName || cleanName.length < 3) {
       setAlert({
-        title: 'Nome invalido',
+        title: 'Nome inválido',
         message: 'Informe seu nome completo com pelo menos 3 caracteres.',
         tone: 'warning',
       })
@@ -78,7 +85,7 @@ export default function ProfileScreen() {
       toast.success('Perfil atualizado com sucesso!')
     } catch (error: any) {
       setAlert({
-        title: 'Nao foi possivel salvar',
+        title: 'Não foi possível salvar',
         message: error?.response?.data?.error || 'Tente novamente em alguns instantes.',
         tone: 'error',
       })
@@ -98,10 +105,16 @@ export default function ProfileScreen() {
   }
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText.trim().toUpperCase() !== 'EXCLUIR') {
+    if (!canConfirmDelete) {
+      const pending = [
+        !deleteAcknowledge ? 'marcar que você compreende os impactos da exclusão' : null,
+        !isDeleteKeywordValid ? 'digitar EXCLUIR corretamente' : null,
+        !isDeleteEmailValid ? `digitar o e-mail da conta (${user?.email || '-'})` : null,
+      ].filter(Boolean)
+
       setAlert({
-        title: 'Confirmacao incorreta',
-        message: 'Digite EXCLUIR corretamente para confirmar a remocao da conta.',
+        title: 'Confirmação incompleta',
+        message: `Antes de excluir sua conta, falta:\n- ${pending.join('\n- ')}`,
         tone: 'warning',
       })
       return
@@ -117,7 +130,7 @@ export default function ProfileScreen() {
     } catch (error: any) {
       setAlert({
         title: 'Erro ao excluir conta',
-        message: error?.response?.data?.error || 'Nao foi possivel concluir a exclusao da conta.',
+        message: error?.response?.data?.error || 'Não foi possível concluir a exclusão da conta.',
         tone: 'error',
       })
     } finally {
@@ -169,6 +182,9 @@ export default function ProfileScreen() {
               autoComplete="name"
               className="h-11 rounded-xl border-slate-300 bg-slate-50"
             />
+            <p className="-mt-1 text-xs text-slate-500">
+              Este nome será exibido no painel e nas movimentações da conta.
+            </p>
             <Input
               label="Email"
               value={user?.email || ''}
@@ -185,7 +201,7 @@ export default function ProfileScreen() {
           </div>
         </Card>
 
-        <Card title="Acoes de conta" className="border-slate-200">
+        <Card title="Ações da conta" className="border-slate-200">
           <div className="space-y-3 px-4 pb-4">
             <Button
               fullWidth
@@ -194,7 +210,7 @@ export default function ProfileScreen() {
               onClick={handleSave}
               className="h-11 rounded-xl"
             >
-              Salvar alteracoes
+              Salvar alterações
             </Button>
             <Button
               fullWidth
@@ -203,7 +219,7 @@ export default function ProfileScreen() {
               onClick={handleDiscardChanges}
               className="h-11 rounded-xl"
             >
-              Descartar alteracoes
+              Descartar alterações
             </Button>
             <Button
               fullWidth
@@ -248,14 +264,17 @@ export default function ProfileScreen() {
 
       <Card title="Zona de perigo" className="border-rose-100">
         <div className="space-y-3 px-4 pb-4">
-          <p className="text-sm text-slate-600">
-            Ao excluir sua conta, seus dados deixarao de aparecer no sistema e a acao nao podera ser desfeita.
+          <p className="text-sm leading-relaxed text-slate-600">
+            A exclusão da conta é permanente. Todos os dados pessoais e financeiros vinculados
+            a este acesso serão removidos e não poderão ser recuperados.
           </p>
           <Button
             fullWidth
             variant="danger"
             onClick={() => {
               setDeleteConfirmText('')
+              setDeleteConfirmEmail('')
+              setDeleteAcknowledge(false)
               setDeleteModalOpen(true)
             }}
             leftIcon={<AlertTriangle size={16} />}
@@ -269,14 +288,14 @@ export default function ProfileScreen() {
       <Modal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Confirmar exclusao da conta"
+        title="Confirmar exclusão da conta"
         size="sm"
         footer={
           <div className="flex gap-2">
             <Button fullWidth variant="outline" onClick={() => setDeleteModalOpen(false)}>
               Cancelar
             </Button>
-            <Button fullWidth variant="danger" loading={deletingAccount} onClick={handleDeleteAccount}>
+            <Button fullWidth variant="danger" loading={deletingAccount} disabled={!canConfirmDelete} onClick={handleDeleteAccount}>
               Excluir conta
             </Button>
           </div>
@@ -285,16 +304,49 @@ export default function ProfileScreen() {
         <div className="space-y-3">
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-3">
             <p className="text-sm font-medium text-rose-700">
-              Esta acao e permanente. Para confirmar, digite <strong>EXCLUIR</strong>.
+              Esta ação é irreversível. Conclua as confirmações abaixo para continuar.
             </p>
           </div>
+          <label className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+              checked={deleteAcknowledge}
+              onChange={e => setDeleteAcknowledge(e.target.checked)}
+            />
+            <span className="text-sm text-slate-700">
+              Eu entendo que esta ação exclui definitivamente minha conta.
+            </span>
+          </label>
           <Input
-            label="Confirmacao"
+            label='Digite "EXCLUIR"'
             value={deleteConfirmText}
             onChange={e => setDeleteConfirmText(e.target.value)}
             placeholder="Digite EXCLUIR"
             className="h-11 rounded-xl border-slate-300 bg-slate-50"
           />
+          <Input
+            label="Confirme seu e-mail"
+            value={deleteConfirmEmail}
+            onChange={e => setDeleteConfirmEmail(e.target.value)}
+            placeholder={user?.email || 'seuemail@exemplo.com'}
+            className="h-11 rounded-xl border-slate-300 bg-slate-50"
+          />
+          <div className="space-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Checklist de segurança</p>
+            <p className="flex items-center gap-2 text-xs text-slate-600">
+              <CheckCircle2 size={13} className={deleteAcknowledge ? 'text-emerald-600' : 'text-slate-300'} />
+              Confirmação de ciência
+            </p>
+            <p className="flex items-center gap-2 text-xs text-slate-600">
+              <CheckCircle2 size={13} className={isDeleteKeywordValid ? 'text-emerald-600' : 'text-slate-300'} />
+              Palavra-chave EXCLUIR
+            </p>
+            <p className="flex items-center gap-2 text-xs text-slate-600">
+              <CheckCircle2 size={13} className={isDeleteEmailValid ? 'text-emerald-600' : 'text-slate-300'} />
+              E-mail da conta confirmado
+            </p>
+          </div>
         </div>
       </Modal>
 
