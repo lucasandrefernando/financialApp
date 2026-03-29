@@ -1,6 +1,9 @@
-﻿import { Router } from 'express'
+import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import pool from '../db.js'
 import {
   generateAccessToken,
@@ -15,6 +18,13 @@ const GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
 let authSchemaReady = false
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.resolve(__dirname, '../..')
+const AUTH_MEDIA = {
+  'login-01': 'login-01.jpg',
+  'login-02': 'login-02.jpg',
+  'login-03': 'login-03.jpg',
+}
 
 function onlyDigits(value) {
   return String(value || '').replace(/\D/g, '')
@@ -144,6 +154,14 @@ async function createSessionTokens(userId) {
   return { accessToken, refreshToken }
 }
 
+function resolveAuthMediaPath(filename) {
+  const candidates = [
+    path.join(projectRoot, 'public', 'img', filename),
+    path.join(projectRoot, 'dist', 'img', filename),
+  ]
+  return candidates.find(file => fs.existsSync(file))
+}
+
 router.use(async (req, res, next) => {
   try {
     await ensureAuthSchema()
@@ -152,6 +170,22 @@ router.use(async (req, res, next) => {
     console.error('ensure auth schema error', err)
     res.status(500).json({ error: 'Erro ao preparar autenticação' })
   }
+})
+
+// GET /api/auth/media/:assetId
+router.get('/media/:assetId', (req, res) => {
+  const assetId = String(req.params.assetId || '').toLowerCase()
+  const filename = AUTH_MEDIA[assetId]
+  if (!filename) {
+    return res.status(404).json({ error: 'Arquivo não encontrado' })
+  }
+
+  const filePath = resolveAuthMediaPath(filename)
+  if (!filePath) {
+    return res.status(404).json({ error: 'Arquivo não encontrado' })
+  }
+
+  return res.sendFile(filePath)
 })
 
 // POST /api/auth/register
