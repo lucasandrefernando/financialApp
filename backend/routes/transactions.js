@@ -27,6 +27,41 @@ async function hasAccountAccess(userId, accountId) {
   return rows.length > 0 ? rows[0].role : null
 }
 
+function parseMoneyValue(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : NaN
+  }
+
+  if (typeof value !== 'string') {
+    return NaN
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) return NaN
+
+  const raw = trimmed.replace(/[^\d,.-]/g, '')
+  if (!raw) return NaN
+
+  const lastComma = raw.lastIndexOf(',')
+  const lastDot = raw.lastIndexOf('.')
+  let normalized = raw
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      normalized = raw.replace(/\./g, '').replace(',', '.')
+    } else {
+      normalized = raw.replace(/,/g, '')
+    }
+  } else if (lastComma !== -1) {
+    normalized = raw.replace(/\./g, '').replace(',', '.')
+  } else if (lastDot !== -1 && /^-?\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+    normalized = raw.replace(/\./g, '')
+  }
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : NaN
+}
+
 // GET /api/transactions
 router.get('/', async (req, res) => {
   try {
@@ -249,7 +284,9 @@ router.post('/', async (req, res) => {
       attachment_url,
     } = req.body
 
-    if (!account_id || !type || !description || !amount || !date) {
+    const parsedAmount = parseMoneyValue(amount)
+
+    if (!account_id || !type || !description || !date || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       await conn.rollback()
       conn.release()
       return res.status(400).json({
@@ -298,7 +335,7 @@ router.post('/', async (req, res) => {
           [
             req.userId, account_id, category_id || null, type,
             `${description} (${i}/${installment_total})`,
-            amount, installDateStr, competence_date || null,
+            parsedAmount, installDateStr, competence_date || null,
             i === 1 ? status : 'scheduled',
             expense_type || null,
             i, installment_total, groupId,
@@ -319,7 +356,7 @@ router.post('/', async (req, res) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.userId, account_id, category_id || null, type,
-          description, amount, date, competence_date || null,
+          description, parsedAmount, date, competence_date || null,
           status, expense_type || null,
           is_installment ? 1 : 0,
           null, null, null,
@@ -439,7 +476,14 @@ router.put('/:id', async (req, res) => {
 
     if (category_id !== undefined) { fields.push('category_id = ?'); values.push(category_id || null) }
     if (description !== undefined) { fields.push('description = ?'); values.push(description) }
-    if (amount !== undefined) { fields.push('amount = ?'); values.push(amount) }
+    if (amount !== undefined) {
+      const parsedAmount = parseMoneyValue(amount)
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ error: 'amount invalido' })
+      }
+      fields.push('amount = ?')
+      values.push(parsedAmount)
+    }
     if (date !== undefined) { fields.push('date = ?'); values.push(date) }
     if (competence_date !== undefined) { fields.push('competence_date = ?'); values.push(competence_date || null) }
     if (status !== undefined) { fields.push('status = ?'); values.push(status) }

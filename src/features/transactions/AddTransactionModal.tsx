@@ -120,7 +120,7 @@ export type TabType = 'expense' | 'income' | 'transfer'
 interface Props {
   open: boolean
   onClose: () => void
-  onSaved?: () => void
+  onSaved?: (savedTransaction?: Transaction) => void | Promise<void>
   initialTab?: TabType
   editingTransaction?: Transaction | null
   allowTypeSwitch?: boolean
@@ -318,8 +318,9 @@ export default function AddTransactionModal({
 
   const onSubmitExpense = async (data: z.infer<typeof expenseSchema>) => {
     try {
+      let savedTransaction: Transaction | undefined
       if (isEditing && editingTransaction) {
-        await updateTx.mutateAsync({
+        savedTransaction = await updateTx.mutateAsync({
           id: editingTransaction.id,
           account_id: data.account_id,
           description: data.description,
@@ -334,7 +335,7 @@ export default function AddTransactionModal({
         })
         toast.success('Movimentação atualizada!')
       } else {
-        await createTx.mutateAsync({
+        savedTransaction = await createTx.mutateAsync({
           ...data,
           type: 'expense',
           tags,
@@ -345,7 +346,7 @@ export default function AddTransactionModal({
 
       expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
       setTags([])
-      onSaved?.()
+      await onSaved?.(savedTransaction)
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
@@ -354,8 +355,9 @@ export default function AddTransactionModal({
 
   const onSubmitIncome = async (data: z.infer<typeof incomeSchema>) => {
     try {
+      let savedTransaction: Transaction | undefined
       if (isEditing && editingTransaction) {
-        await updateTx.mutateAsync({
+        savedTransaction = await updateTx.mutateAsync({
           id: editingTransaction.id,
           account_id: data.account_id,
           description: data.description,
@@ -368,13 +370,13 @@ export default function AddTransactionModal({
         })
         toast.success('Movimentação atualizada!')
       } else {
-        await createTx.mutateAsync({ ...data, type: 'income', tags, is_recurring: false, is_installment: false })
+        savedTransaction = await createTx.mutateAsync({ ...data, type: 'income', tags, is_recurring: false, is_installment: false })
         toast.success('Receita adicionada!')
       }
 
       incForm.reset({ date: defaultDate, status: 'completed' })
       setTags([])
-      onSaved?.()
+      await onSaved?.(savedTransaction)
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
@@ -383,8 +385,9 @@ export default function AddTransactionModal({
 
   const onSubmitTransfer = async (data: z.infer<typeof transferSchema>) => {
     try {
+      let savedTransaction: Transaction | undefined
       if (isEditing && editingTransaction) {
-        await updateTx.mutateAsync({
+        savedTransaction = await updateTx.mutateAsync({
           id: editingTransaction.id,
           account_id: data.account_id,
           transfer_to_account_id: data.transfer_to_account_id,
@@ -394,7 +397,7 @@ export default function AddTransactionModal({
         })
         toast.success('Transferência atualizada!')
       } else {
-        await createTx.mutateAsync({
+        savedTransaction = await createTx.mutateAsync({
           ...data,
           type: 'transfer',
           description: 'Transferência',
@@ -406,7 +409,7 @@ export default function AddTransactionModal({
       }
 
       trfForm.reset({ date: defaultDate })
-      onSaved?.()
+      await onSaved?.(savedTransaction)
       onClose()
     } catch (error) {
       toast.error(getErrorMessage(error, 'Erro ao salvar transferência.'))

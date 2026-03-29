@@ -124,6 +124,52 @@ function getTodayDateString() {
   return new Date().toISOString().split('T')[0]
 }
 
+function normalizeText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function compareTransactionsDesc(a: Transaction, b: Transaction) {
+  const dateA = (a.date || '').slice(0, 10)
+  const dateB = (b.date || '').slice(0, 10)
+  if (dateA !== dateB) return dateB.localeCompare(dateA)
+
+  const createdAtA = a.created_at || ''
+  const createdAtB = b.created_at || ''
+  if (createdAtA !== createdAtB) return createdAtB.localeCompare(createdAtA)
+
+  return (b.id || 0) - (a.id || 0)
+}
+
+function matchesActiveFilters(
+  tx: Transaction,
+  typeFilter: TypeFilter,
+  search: string,
+  dateFrom: string,
+  dateTo: string
+) {
+  if (typeFilter !== 'all' && tx.type !== typeFilter) {
+    return false
+  }
+
+  const txDate = (tx.date || '').slice(0, 10)
+  if (dateFrom && txDate && txDate < dateFrom) return false
+  if (dateTo && txDate && txDate > dateTo) return false
+
+  if (search) {
+    const haystack = normalizeText(
+      [tx.description, tx.category_name, tx.account_name].filter(Boolean).join(' ')
+    )
+    if (!haystack.includes(normalizeText(search))) {
+      return false
+    }
+  }
+
+  return true
+}
+
 export default function TransactionListScreen() {
   const queryClient = useQueryClient()
   const { selectedMonth } = useAppStore()
@@ -345,7 +391,33 @@ export default function TransactionListScreen() {
     setAddOpen(true)
   }
 
-  const refreshTransactionsAfterSave = async () => {
+  const refreshTransactionsAfterSave = async (savedTransaction?: Transaction) => {
+    if (savedTransaction?.id) {
+      setVisibleTransactions(prev => {
+        const exists = prev.some(tx => tx.id === savedTransaction.id)
+        const fitsCurrentFilters = matchesActiveFilters(
+          savedTransaction,
+          typeFilter,
+          search,
+          dateFrom,
+          dateTo
+        )
+
+        if (!exists) {
+          if (!fitsCurrentFilters) return prev
+          return [savedTransaction, ...prev].sort(compareTransactionsDesc)
+        }
+
+        if (!fitsCurrentFilters) {
+          return prev.filter(tx => tx.id !== savedTransaction.id)
+        }
+
+        return prev
+          .map(tx => (tx.id === savedTransaction.id ? { ...tx, ...savedTransaction } : tx))
+          .sort(compareTransactionsDesc)
+      })
+    }
+
     await syncAfterMutation()
   }
 
