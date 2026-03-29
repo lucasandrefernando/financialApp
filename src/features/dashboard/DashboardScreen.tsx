@@ -65,35 +65,35 @@ export default function DashboardScreen() {
       </div>
 
       {/* Month cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="min-w-0 bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
               <TrendingUp size={16} className="text-green-600" />
             </div>
           </div>
           <p className="text-xs text-gray-400 font-medium">Receitas</p>
-          <p className="text-base font-bold text-gray-900 mt-0.5 tabular-nums">{formatCurrency(cm.income)}</p>
+          <p className="mt-0.5 truncate text-sm sm:text-base font-bold text-gray-900 tabular-nums">{formatCurrency(cm.income)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div className="min-w-0 bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
               <TrendingDown size={16} className="text-red-600" />
             </div>
           </div>
           <p className="text-xs text-gray-400 font-medium">Gastos</p>
-          <p className="text-base font-bold text-gray-900 mt-0.5 tabular-nums">{formatCurrency(cm.expenses)}</p>
+          <p className="mt-0.5 truncate text-sm sm:text-base font-bold text-gray-900 tabular-nums">{formatCurrency(cm.expenses)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div className="min-w-0 bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
               <Scale size={16} className="text-violet-600" />
             </div>
           </div>
           <p className="text-xs text-gray-400 font-medium">Saldo</p>
-          <p className={cn('text-base font-bold mt-0.5 tabular-nums', balancePositive ? 'text-green-600' : 'text-red-600')}>
+          <p className={cn('mt-0.5 truncate text-sm sm:text-base font-bold tabular-nums', balancePositive ? 'text-green-600' : 'text-red-600')}>
             {formatCurrency(cm.balance)}
           </p>
         </div>
