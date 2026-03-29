@@ -92,85 +92,101 @@ export default function LoginScreen() {
           </div>
         </section>
 
-        <section className="flex items-center justify-center bg-white p-6 sm:p-8 lg:p-12">
+        <section className="relative flex items-center justify-center bg-white p-5 sm:p-7 lg:p-12">
           <div className="w-full max-w-md">
-            <div className="relative mb-6 overflow-hidden rounded-2xl border border-violet-100 lg:hidden">
+            <div className="relative mb-6 overflow-hidden rounded-[26px] border border-violet-200/70 bg-violet-900 lg:hidden">
               <img
                 src={heroImageSrc}
                 alt="Pessoa organizando as finanças"
-                className="h-44 w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover opacity-55"
                 loading="lazy"
               />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-violet-900/45 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-950/75 via-violet-900/55 to-purple-700/40" />
+              <div className="relative px-5 py-6">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                  <ShieldCheck size={13} />
+                  Acesso seguro
+                </div>
+                <h3 className="max-w-[17rem] text-2xl font-semibold leading-tight text-white">
+                  Gestão elegante para sua rotina financeira.
+                </h3>
+                <p className="mt-2 max-w-[18rem] text-sm text-white/85">
+                  Um login rápido, limpo e com foco no que importa.
+                </p>
+              </div>
             </div>
 
-            <div className="mb-8 text-center">
+            <div className="mb-7 text-center lg:mb-8">
               <BrandWordmark size="sm" className="justify-center" />
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Acesse sua conta</h2>
+              <h2 className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:text-[2.15rem] lg:text-3xl">
+                Acesse sua conta
+              </h2>
               <p className="mt-1 text-sm text-slate-600">Entre com Google ou use seu e-mail e senha.</p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
-              <Input
-                label="E-mail"
-                type="email"
-                placeholder="seuemail@exemplo.com"
-                leftIcon={<Mail size={16} />}
-                autoComplete="email"
-                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
-                {...register('email')}
-              />
+            <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_16px_50px_-42px_rgba(76,29,149,0.45)] backdrop-blur-sm sm:p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+              <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
+                <Input
+                  label="E-mail"
+                  type="email"
+                  placeholder="seuemail@exemplo.com"
+                  leftIcon={<Mail size={16} />}
+                  autoComplete="email"
+                  className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+                  {...register('email')}
+                />
 
-              <Input
-                label="Senha"
-                type="password"
-                placeholder="Digite sua senha"
-                leftIcon={<Lock size={16} />}
-                autoComplete="current-password"
-                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
-                {...register('password')}
-              />
+                <Input
+                  label="Senha"
+                  type="password"
+                  placeholder="Digite sua senha"
+                  leftIcon={<Lock size={16} />}
+                  autoComplete="current-password"
+                  className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+                  {...register('password')}
+                />
 
-              <div className="flex items-center justify-end">
-                <Link to="/forgot-password" className="text-xs font-semibold text-violet-700 hover:underline">
-                  Esqueci minha senha
-                </Link>
+                <div className="flex items-center justify-end">
+                  <Link to="/forgot-password" className="text-xs font-semibold text-violet-700 hover:underline">
+                    Esqueci minha senha
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  loading={isSubmitting}
+                  size="lg"
+                  leftIcon={!isSubmitting ? <ArrowRight size={16} /> : undefined}
+                  className="h-12 rounded-xl bg-gradient-to-r from-violet-700 to-purple-600 text-white shadow-[0_14px_30px_-20px_rgba(109,40,217,0.85)] hover:brightness-110"
+                >
+                  Entrar
+                </Button>
+              </form>
+
+              <div className="mt-6 mb-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">ou</span>
+                <div className="h-px flex-1 bg-slate-200" />
               </div>
 
-              <Button
-                type="submit"
-                fullWidth
-                loading={isSubmitting}
-                size="lg"
-                leftIcon={!isSubmitting ? <ArrowRight size={16} /> : undefined}
-                className="h-12 rounded-xl bg-gradient-to-r from-violet-700 to-purple-600 text-white shadow-[0_14px_30px_-20px_rgba(109,40,217,0.85)] hover:brightness-110"
+              <a
+                href={googleLoginUrl}
+                className="group mb-5 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white"
               >
-                Entrar
-              </Button>
-            </form>
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-violet-200 bg-white text-sm font-bold text-violet-700">
+                  G
+                </span>
+                Continuar com o Google
+              </a>
 
-            <div className="mt-6 mb-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">ou</span>
-              <div className="h-px flex-1 bg-slate-200" />
+              <p className="mt-6 text-center text-sm text-slate-600">
+                Não tem conta?{' '}
+                <Link to="/register" className="font-semibold text-violet-700 hover:underline">
+                  Criar conta
+                </Link>
+              </p>
             </div>
-
-            <a
-              href={googleLoginUrl}
-              className="group mb-5 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-violet-200 bg-white text-sm font-bold text-violet-700">
-                G
-              </span>
-              Continuar com o Google
-            </a>
-
-            <p className="mt-6 text-center text-sm text-slate-600">
-              Não tem conta?{' '}
-              <Link to="/register" className="font-semibold text-violet-700 hover:underline">
-                Criar conta
-              </Link>
-            </p>
           </div>
         </section>
       </main>

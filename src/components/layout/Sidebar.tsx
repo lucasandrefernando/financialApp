@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { cn } from '../../lib/utils'
-import { BrandLockup } from '../brand/Brand'
+import { BrandIcon, BrandWordmark } from '../brand/Brand'
 import { logout as logoutRequest } from '../../services/auth'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -41,16 +41,18 @@ export function Sidebar() {
       'hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0',
       sidebarCollapsed ? 'w-16' : 'w-60'
     )}>
-      <div className={cn(
-        'flex items-center h-16 px-4 border-b border-gray-100',
-        sidebarCollapsed ? 'justify-center' : 'justify-between'
-      )}>
-        {!sidebarCollapsed && (
-          <BrandLockup iconSize="sm" wordmarkSize="sm" />
+      <div className={cn('relative flex h-16 items-center border-b border-gray-100 px-3', sidebarCollapsed ? 'justify-center' : 'justify-center')}>
+        {sidebarCollapsed ? (
+          <BrandIcon size="sm" />
+        ) : (
+          <BrandWordmark size="sm" className="justify-center" />
         )}
         <button
           onClick={toggleSidebar}
-          className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+          className={cn(
+            'absolute right-2 h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors',
+            sidebarCollapsed && 'right-1'
+          )}
           aria-label={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
