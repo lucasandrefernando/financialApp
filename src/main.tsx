@@ -13,6 +13,15 @@ const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
 const redirected = ensureBasePathPrefix(appBasePath)
 
 if (!redirected) {
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    const swPath = appBasePath === '/' ? '/sw.js' : `${appBasePath}/sw.js`
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register(swPath).catch((error) => {
+        console.warn('Falha ao registrar Service Worker:', error)
+      })
+    })
+  }
+
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
