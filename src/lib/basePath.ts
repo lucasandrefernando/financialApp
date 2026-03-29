@@ -35,3 +35,22 @@ export function toBasePrefix(basePath: string) {
   return basePath === '/' ? '' : basePath
 }
 
+export function ensureBasePathPrefix(basePath: string) {
+  if (typeof window === 'undefined') return false
+
+  const prefix = toBasePrefix(basePath)
+  if (!prefix) return false
+  if (isLocalHost(window.location.hostname)) return false
+
+  const pathname = window.location.pathname || '/'
+  const alreadyPrefixed = pathname === prefix || pathname.startsWith(`${prefix}/`)
+  if (alreadyPrefixed) return false
+
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const redirectedPath = normalizedPath === '/' ? `${prefix}/` : `${prefix}${normalizedPath}`
+  const target = `${redirectedPath}${window.location.search || ''}${window.location.hash || ''}`
+
+  window.location.replace(target)
+  return true
+}
+
