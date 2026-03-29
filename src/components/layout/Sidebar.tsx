@@ -1,8 +1,11 @@
-import { NavLink } from 'react-router-dom'
-import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { cn } from '../../lib/utils'
 import { BrandLockup } from '../brand/Brand'
+import { logout as logoutRequest } from '../../services/auth'
+import { useAuthStore } from '../../stores/authStore'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
@@ -15,6 +18,23 @@ const navItems = [
 
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useAppStore()
+  const storeLogout = useAuthStore((s) => s.logout)
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    try {
+      await logoutRequest()
+    } catch {
+      // Ignore network errors and force local logout for a consistent UX.
+    } finally {
+      storeLogout()
+      navigate('/login', { replace: true })
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <aside className={cn(
@@ -60,6 +80,23 @@ export function Sidebar() {
           ))}
         </ul>
       </nav>
+
+      <div className="border-t border-gray-100 p-2">
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className={cn(
+            'flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
+            'text-rose-600 hover:bg-rose-50 disabled:opacity-60',
+            sidebarCollapsed && 'justify-center px-0'
+          )}
+          title={sidebarCollapsed ? 'Sair' : undefined}
+        >
+          <LogOut size={18} className="flex-shrink-0" />
+          {!sidebarCollapsed && <span>{isLoggingOut ? 'Saindo...' : 'Sair'}</span>}
+        </button>
+      </div>
     </aside>
   )
 }

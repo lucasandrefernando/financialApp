@@ -10,7 +10,7 @@ import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
-import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { BrandWordmark } from '../../components/brand/Brand'
 import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
 
 const schema = z.object({
@@ -105,10 +105,8 @@ export default function LoginScreen() {
             </div>
 
             <div className="mb-8 text-center">
-              <BrandIcon size="md" className="mx-auto" />
-              <BrandWordmark size="sm" className="mt-4" />
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Bem-vindo</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Acesse sua conta</h2>
+              <BrandWordmark size="sm" className="justify-center" />
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">Acesse sua conta</h2>
               <p className="mt-1 text-sm text-slate-600">Entre com Google ou use seu e-mail e senha.</p>
             </div>
 
