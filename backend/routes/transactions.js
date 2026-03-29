@@ -62,6 +62,27 @@ function parseMoneyValue(value) {
   return Number.isFinite(parsed) ? parsed : NaN
 }
 
+const VALID_RECURRING_FREQUENCIES = new Set([
+  'daily',
+  'weekly',
+  'biweekly',
+  'monthly',
+  'quarterly',
+  'semiannual',
+  'yearly',
+])
+
+function toRecurringDayOfMonth(rawValue, fallbackDate) {
+  const parsed = Number(rawValue)
+  if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 31) {
+    return parsed
+  }
+
+  const fallback = new Date(`${fallbackDate}T00:00:00`)
+  const day = fallback.getDate()
+  return Number.isInteger(day) && day >= 1 && day <= 31 ? day : 1
+}
+
 // GET /api/transactions
 router.get('/', async (req, res) => {
   try {
@@ -279,6 +300,10 @@ router.post('/', async (req, res) => {
       transfer_to_account_id,
       is_recurring = false,
       recurring_id,
+      recurring_frequency = 'monthly',
+      recurring_day_of_month,
+      recurring_start_date,
+      recurring_end_date,
       tags,
       notes,
       attachment_url,
@@ -302,6 +327,11 @@ router.post('/', async (req, res) => {
     }
 
     if (type === 'transfer') {
+      if (is_recurring) {
+        await conn.rollback()
+        conn.release()
+        return res.status(400).json({ error: 'Transferências não podem ser fixas/recorrentes' })
+      }
       if (!transfer_to_account_id) {
         await conn.rollback()
         conn.release()
@@ -313,6 +343,47 @@ router.post('/', async (req, res) => {
         conn.release()
         return res.status(403).json({ error: 'Sem acesso à conta de destino' })
       }
+    }
+
+    if (is_recurring && is_installment) {
+      await conn.rollback()
+      conn.release()
+      return res.status(400).json({ error: 'Lançamento fixo não pode ser parcelado' })
+    }
+
+    if (is_recurring && !VALID_RECURRING_FREQUENCIES.has(String(recurring_frequency))) {
+      await conn.rollback()
+      conn.release()
+      return res.status(400).json({ error: 'recurring_frequency inválida' })
+    }
+
+    let resolvedRecurringId = recurring_id || null
+    if (is_recurring) {
+      const startDate = recurring_start_date || date
+      const endDate = recurring_end_date || null
+      const dayOfMonth = toRecurringDayOfMonth(recurring_day_of_month, startDate)
+
+      const [recurringResult] = await conn.query(
+        `INSERT INTO recurring_transactions
+         (user_id, account_id, category_id, type, description, amount, frequency, day_of_month,
+          start_date, end_date, active, tags, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)`,
+        [
+          req.userId,
+          account_id,
+          category_id || null,
+          type,
+          description,
+          parsedAmount,
+          recurring_frequency,
+          dayOfMonth,
+          startDate,
+          endDate,
+          tags ? JSON.stringify(tags) : null,
+          notes || null,
+        ]
+      )
+      resolvedRecurringId = recurringResult.insertId
     }
 
     const insertedIds = []
@@ -339,7 +410,7 @@ router.post('/', async (req, res) => {
             i === 1 ? status : 'scheduled',
             expense_type || null,
             i, installment_total, groupId,
-            is_recurring, recurring_id || null,
+            is_recurring, resolvedRecurringId,
             transfer_to_account_id || null,
             tags ? JSON.stringify(tags) : null,
             notes || null, attachment_url || null,
@@ -361,7 +432,7 @@ router.post('/', async (req, res) => {
           is_installment ? 1 : 0,
           null, null, null,
           is_recurring ? 1 : 0,
-          recurring_id || null,
+          resolvedRecurringId,
           transfer_to_account_id || null,
           tags ? JSON.stringify(tags) : null,
           notes || null, attachment_url || null,

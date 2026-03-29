@@ -208,6 +208,8 @@ export default function AddTransactionModal({
   const [tags, setTags] = useState<string[]>([])
   const [showAdvancedExpense, setShowAdvancedExpense] = useState(false)
   const [showAdvancedIncome, setShowAdvancedIncome] = useState(false)
+  const [isRecurringExpense, setIsRecurringExpense] = useState(false)
+  const [isRecurringIncome, setIsRecurringIncome] = useState(false)
 
   const isEditing = Boolean(editingTransaction)
 
@@ -253,6 +255,8 @@ export default function AddTransactionModal({
       setTagInput('')
       setShowAdvancedExpense(nextTab === 'expense')
       setShowAdvancedIncome(nextTab === 'income')
+      setIsRecurringExpense(nextTab === 'expense' ? Boolean(editingTransaction.is_recurring) : false)
+      setIsRecurringIncome(nextTab === 'income' ? Boolean(editingTransaction.is_recurring) : false)
 
       if (nextTab === 'expense') {
         expForm.reset({
@@ -300,6 +304,8 @@ export default function AddTransactionModal({
     setTagInput('')
     setShowAdvancedExpense(false)
     setShowAdvancedIncome(false)
+    setIsRecurringExpense(false)
+    setIsRecurringIncome(false)
     expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
     incForm.reset({ date: defaultDate, status: 'completed' })
     trfForm.reset({ date: defaultDate })
@@ -335,17 +341,22 @@ export default function AddTransactionModal({
         })
         toast.success('Movimentação atualizada!')
       } else {
+        const dayOfMonth = Number(data.date.split('-')[2] || 1)
         savedTransaction = await createTx.mutateAsync({
           ...data,
           type: 'expense',
           tags,
-          is_recurring: false,
+          is_recurring: isRecurringExpense,
+          recurring_frequency: 'monthly',
+          recurring_day_of_month: dayOfMonth,
+          recurring_start_date: data.date,
         })
         toast.success('Gasto adicionado!')
       }
 
       expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
       setTags([])
+      setIsRecurringExpense(false)
       await onSaved?.(savedTransaction)
       onClose()
     } catch (error) {
@@ -370,12 +381,23 @@ export default function AddTransactionModal({
         })
         toast.success('Movimentação atualizada!')
       } else {
-        savedTransaction = await createTx.mutateAsync({ ...data, type: 'income', tags, is_recurring: false, is_installment: false })
+        const dayOfMonth = Number(data.date.split('-')[2] || 1)
+        savedTransaction = await createTx.mutateAsync({
+          ...data,
+          type: 'income',
+          tags,
+          is_recurring: isRecurringIncome,
+          recurring_frequency: 'monthly',
+          recurring_day_of_month: dayOfMonth,
+          recurring_start_date: data.date,
+          is_installment: false,
+        })
         toast.success('Receita adicionada!')
       }
 
       incForm.reset({ date: defaultDate, status: 'completed' })
       setTags([])
+      setIsRecurringIncome(false)
       await onSaved?.(savedTransaction)
       onClose()
     } catch (error) {
@@ -573,11 +595,38 @@ export default function AddTransactionModal({
                 </div>
               </div>
 
+              {!isEditing && (
+                <div className="flex items-center justify-between rounded-lg bg-violet-50 p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-violet-900">Gasto fixo mensal</p>
+                    <p className="text-xs text-violet-700">Ideal para aluguel, internet, assinaturas e contas mensais.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isRecurringExpense) {
+                        expForm.setValue('is_installment', false)
+                      }
+                      setIsRecurringExpense(v => !v)
+                    }}
+                    className={cn('relative h-6 w-10 rounded-full transition-colors', isRecurringExpense ? 'bg-violet-600' : 'bg-violet-200')}
+                  >
+                    <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', isRecurringExpense ? 'left-0.5 translate-x-4' : 'left-0.5')} />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                 <label className="text-sm font-medium text-gray-700">Parcelado?</label>
                 <button
                   type="button"
-                  onClick={() => expForm.setValue('is_installment', !isInstallment)}
+                  onClick={() => {
+                    if (!isInstallment && isRecurringExpense) {
+                      toast.error('Lançamento fixo mensal não pode ser parcelado.')
+                      return
+                    }
+                    expForm.setValue('is_installment', !isInstallment)
+                  }}
                   className={cn('relative h-6 w-10 rounded-full transition-colors', isInstallment ? 'bg-violet-600' : 'bg-gray-300')}
                 >
                   <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', isInstallment ? 'left-0.5 translate-x-4' : 'left-0.5')} />
@@ -706,6 +755,22 @@ export default function AddTransactionModal({
                   ))}
                 </div>
               </div>
+
+              {!isEditing && (
+                <div className="flex items-center justify-between rounded-lg bg-emerald-50 p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-900">Receita fixa mensal</p>
+                    <p className="text-xs text-emerald-700">Ideal para salário, aluguel recebido e rendas recorrentes.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsRecurringIncome(v => !v)}
+                    className={cn('relative h-6 w-10 rounded-full transition-colors', isRecurringIncome ? 'bg-emerald-600' : 'bg-emerald-200')}
+                  >
+                    <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', isRecurringIncome ? 'left-0.5 translate-x-4' : 'left-0.5')} />
+                  </button>
+                </div>
+              )}
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">Tags</label>

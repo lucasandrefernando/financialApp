@@ -700,6 +700,7 @@ export default function TransactionListScreen() {
                         <p className="truncate text-sm font-semibold text-slate-800">{tx.description}</p>
                         <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                           <Badge color={typeVisual.badgeColor}>{typeVisual.label}</Badge>
+                          {tx.is_recurring && <Badge color="purple">Fixo</Badge>}
                           {tx.category_name && <span className="text-xs text-slate-500">{tx.category_name}</span>}
                           {tx.account_name && (
                             <span className="truncate text-xs text-slate-500">· {tx.account_name}</span>
