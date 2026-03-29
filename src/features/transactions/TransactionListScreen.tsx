@@ -605,6 +605,7 @@ export default function TransactionListScreen() {
         }}
         initialTab={modalTab}
         editingTransaction={editingTransaction}
+        allowTypeSwitch={false}
       />
     </div>
   )

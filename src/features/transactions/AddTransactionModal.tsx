@@ -57,6 +57,7 @@ interface Props {
   onClose: () => void
   initialTab?: TabType
   editingTransaction?: Transaction | null
+  allowTypeSwitch?: boolean
 }
 
 function toDateInput(value?: string | null) {
@@ -87,6 +88,7 @@ export default function AddTransactionModal({
   onClose,
   initialTab = 'expense',
   editingTransaction = null,
+  allowTypeSwitch = true,
 }: Props) {
   const [tab, setTab] = useState<TabType>(initialTab)
   const [tagInput, setTagInput] = useState('')
@@ -189,6 +191,7 @@ export default function AddTransactionModal({
       if (isEditing && editingTransaction) {
         await updateTx.mutateAsync({
           id: editingTransaction.id,
+          account_id: data.account_id,
           description: data.description,
           amount: data.amount,
           date: data.date,
@@ -223,6 +226,7 @@ export default function AddTransactionModal({
       if (isEditing && editingTransaction) {
         await updateTx.mutateAsync({
           id: editingTransaction.id,
+          account_id: data.account_id,
           description: data.description,
           amount: data.amount,
           date: data.date,
@@ -250,6 +254,8 @@ export default function AddTransactionModal({
       if (isEditing && editingTransaction) {
         await updateTx.mutateAsync({
           id: editingTransaction.id,
+          account_id: data.account_id,
+          transfer_to_account_id: data.transfer_to_account_id,
           amount: data.amount,
           date: data.date,
           notes: data.notes || null,
@@ -302,7 +308,7 @@ export default function AddTransactionModal({
 
   return (
     <Modal open={open} onClose={onClose} title={isEditing ? 'Editar movimentação' : 'Nova Transação'} size="md">
-      {!isEditing && (
+      {!isEditing && allowTypeSwitch && (
         <div className="mb-5 flex gap-2">
           {tabs.map(t => (
             <button
@@ -335,7 +341,6 @@ export default function AddTransactionModal({
             options={accountOptions}
             placeholder="Selecione..."
             error={expForm.formState.errors.account_id?.message}
-            disabled={isEditing}
             {...expForm.register('account_id')}
           />
 
@@ -458,7 +463,6 @@ export default function AddTransactionModal({
             options={accountOptions}
             placeholder="Selecione..."
             error={incForm.formState.errors.account_id?.message}
-            disabled={isEditing}
             {...incForm.register('account_id')}
           />
           <Select label="Categoria" options={incomeCategories} placeholder="Selecione..." {...incForm.register('category_id')} />
@@ -540,7 +544,6 @@ export default function AddTransactionModal({
             options={accountOptions}
             placeholder="Selecione..."
             error={trfForm.formState.errors.account_id?.message}
-            disabled={isEditing}
             {...trfForm.register('account_id')}
           />
           <Select
@@ -548,7 +551,6 @@ export default function AddTransactionModal({
             options={accountOptions}
             placeholder="Selecione..."
             error={trfForm.formState.errors.transfer_to_account_id?.message}
-            disabled={isEditing}
             {...trfForm.register('transfer_to_account_id')}
           />
 

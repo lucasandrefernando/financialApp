@@ -353,22 +353,68 @@ router.put('/:id', async (req, res) => {
       [req.params.id]
     )
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Transação não encontrada' })
+      return res.status(404).json({ error: 'Transacao nao encontrada' })
     }
 
     const tx = existing[0]
     const role = await hasAccountAccess(req.userId, tx.account_id)
     if (!role || role === 'viewer') {
-      return res.status(403).json({ error: 'Sem permissão para editar esta transação' })
+      return res.status(403).json({ error: 'Sem permissao para editar esta transacao' })
     }
 
     const {
+      account_id,
+      transfer_to_account_id,
       category_id, description, amount, date, competence_date,
       status, expense_type, tags, notes, attachment_url,
     } = req.body
 
     const fields = []
     const values = []
+    let nextAccountId = tx.account_id
+    let nextTransferAccountId = tx.transfer_to_account_id || null
+
+    if (account_id !== undefined) {
+      const parsedAccountId = parseInt(account_id)
+      if (!parsedAccountId || Number.isNaN(parsedAccountId)) {
+        return res.status(400).json({ error: 'account_id invalido' })
+      }
+
+      const nextRole = await hasAccountAccess(req.userId, parsedAccountId)
+      if (!nextRole) {
+        return res.status(403).json({ error: 'Sem acesso a nova conta informada' })
+      }
+      if (nextRole === 'viewer') {
+        return res.status(403).json({ error: 'Sem permissao para editar nessa conta' })
+      }
+
+      nextAccountId = parsedAccountId
+      fields.push('account_id = ?')
+      values.push(parsedAccountId)
+    }
+
+    if (transfer_to_account_id !== undefined) {
+      if (tx.type !== 'transfer') {
+        return res.status(400).json({ error: 'transfer_to_account_id so e valido para transferencias' })
+      }
+
+      const parsedTransferAccountId = parseInt(transfer_to_account_id)
+      if (!parsedTransferAccountId || Number.isNaN(parsedTransferAccountId)) {
+        return res.status(400).json({ error: 'transfer_to_account_id invalido' })
+      }
+      if (parsedTransferAccountId === nextAccountId) {
+        return res.status(400).json({ error: 'Conta origem e destino devem ser diferentes' })
+      }
+
+      const destinationRole = await hasAccountAccess(req.userId, parsedTransferAccountId)
+      if (!destinationRole) {
+        return res.status(403).json({ error: 'Sem acesso a conta de destino informada' })
+      }
+
+      nextTransferAccountId = parsedTransferAccountId
+      fields.push('transfer_to_account_id = ?')
+      values.push(parsedTransferAccountId)
+    }
 
     if (category_id !== undefined) { fields.push('category_id = ?'); values.push(category_id || null) }
     if (description !== undefined) { fields.push('description = ?'); values.push(description) }
@@ -377,9 +423,16 @@ router.put('/:id', async (req, res) => {
     if (competence_date !== undefined) { fields.push('competence_date = ?'); values.push(competence_date || null) }
     if (status !== undefined) { fields.push('status = ?'); values.push(status) }
     if (expense_type !== undefined) { fields.push('expense_type = ?'); values.push(expense_type || null) }
-    if (tags !== undefined) { fields.push('tags = ?'); values.push(JSON.stringify(tags)) }
+    if (tags !== undefined) {
+      fields.push('tags = ?')
+      values.push(tags == null ? null : JSON.stringify(tags))
+    }
     if (notes !== undefined) { fields.push('notes = ?'); values.push(notes || null) }
     if (attachment_url !== undefined) { fields.push('attachment_url = ?'); values.push(attachment_url || null) }
+
+    if (tx.type === 'transfer' && !nextTransferAccountId) {
+      return res.status(400).json({ error: 'Transferencia precisa de conta de destino' })
+    }
 
     if (fields.length === 0) {
       return res.status(400).json({ error: 'Nenhum campo para atualizar' })
@@ -393,17 +446,22 @@ router.put('/:id', async (req, res) => {
       values
     )
 
-    await recalculateBalance(tx.account_id)
-    if (tx.transfer_to_account_id) {
-      await recalculateBalance(tx.transfer_to_account_id)
+    const affectedAccounts = new Set([tx.account_id, nextAccountId])
+    if (tx.transfer_to_account_id) affectedAccounts.add(tx.transfer_to_account_id)
+    if (nextTransferAccountId) affectedAccounts.add(nextTransferAccountId)
+
+    for (const accountId of affectedAccounts) {
+      await recalculateBalance(accountId)
     }
 
     const [rows] = await pool.query(
       `SELECT t.*, c.name AS category_name, c.color AS category_color, c.icon AS category_icon,
-              ba.name AS account_name
+              ba.name AS account_name,
+              ba2.name AS transfer_to_account_name
        FROM transactions t
        LEFT JOIN categories c ON c.id = t.category_id
        LEFT JOIN bank_accounts ba ON ba.id = t.account_id
+       LEFT JOIN bank_accounts ba2 ON ba2.id = t.transfer_to_account_id
        WHERE t.id = ?`,
       [req.params.id]
     )
@@ -450,3 +508,4 @@ router.delete('/:id', async (req, res) => {
 })
 
 export default router
+
