@@ -22,7 +22,35 @@ function normalizeMoneyInput(value: unknown) {
   if (typeof value !== 'string') return value
   const trimmed = value.trim()
   if (!trimmed) return trimmed
-  const normalized = trimmed.replace(/\./g, '').replace(',', '.')
+
+  // Accept both pt-BR and en-US decimal formats:
+  // 1.234,56 | 1234,56 | 1234.56 | 1,234.56
+  const raw = trimmed.replace(/[^\d,.-]/g, '')
+  if (!raw) return value
+
+  const lastComma = raw.lastIndexOf(',')
+  const lastDot = raw.lastIndexOf('.')
+  let normalized = raw
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      // comma as decimal separator
+      normalized = raw.replace(/\./g, '').replace(',', '.')
+    } else {
+      // dot as decimal separator
+      normalized = raw.replace(/,/g, '')
+    }
+  } else if (lastComma !== -1) {
+    // only comma present -> comma as decimal separator
+    normalized = raw.replace(/\./g, '').replace(',', '.')
+  } else if (lastDot !== -1) {
+    // only dot present -> dot as decimal separator
+    // if dot looks like thousands grouping only (e.g. 1.234.567), remove dots
+    if (/^-?\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+      normalized = raw.replace(/\./g, '')
+    }
+  }
+
   const parsed = Number(normalized)
   return Number.isFinite(parsed) ? parsed : value
 }
