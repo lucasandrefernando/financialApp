@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { LogOut, User, Check, AlertTriangle } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { AlertTriangle, Check, LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { deleteMyAccount, logout } from '../../services/auth'
 import { sharingService } from '../../services/sharing'
@@ -10,17 +10,82 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
+import { Modal } from '../../components/ui/Modal'
+import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { toast } from '../../components/ui/Toast'
+import type { User } from '../../types'
+
+type AlertState = { title: string; message: string; tone?: AlertTone } | null
+
+type ProfileForm = {
+  name: string
+  cpf: string
+  currency: string
+  locale: string
+  timezone: string
+}
+
+const LOCALES = ['pt-BR', 'en-US']
+const CURRENCIES = ['BRL', 'USD', 'EUR']
+const TIMEZONES = ['America/Sao_Paulo', 'America/Fortaleza', 'America/Manaus', 'America/Belem', 'UTC']
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, '')
+}
+
+function formatCpf(value: string) {
+  const digits = onlyDigits(value).slice(0, 11)
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+}
+
+function isValidCpf(value: string) {
+  const cpf = onlyDigits(value)
+  if (cpf.length !== 11) return false
+  if (/^(\d)\1+$/.test(cpf)) return false
+
+  let sum = 0
+  for (let i = 0; i < 9; i += 1) sum += Number(cpf[i]) * (10 - i)
+  let check = (sum * 10) % 11
+  if (check === 10) check = 0
+  if (check !== Number(cpf[9])) return false
+
+  sum = 0
+  for (let i = 0; i < 10; i += 1) sum += Number(cpf[i]) * (11 - i)
+  check = (sum * 10) % 11
+  if (check === 10) check = 0
+  return check === Number(cpf[10])
+}
+
+function toProfileForm(user: User | null): ProfileForm {
+  return {
+    name: user?.name || '',
+    cpf: user?.cpf || '',
+    currency: user?.currency || 'BRL',
+    locale: user?.locale || 'pt-BR',
+    timezone: user?.timezone || 'America/Sao_Paulo',
+  }
+}
 
 export default function ProfileScreen() {
   const navigate = useNavigate()
   const { user, setUser, logout: storeLogout } = useAuthStore()
-  const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(user?.name || '')
-  const [saving, setSaving] = useState(false)
-  const [deletingAccount, setDeletingAccount] = useState(false)
 
-  useEffect(() => { setName(user?.name || '') }, [user])
+  const [form, setForm] = useState<ProfileForm>(() => toProfileForm(user))
+  const [baselineForm, setBaselineForm] = useState<ProfileForm>(() => toProfileForm(user))
+  const [saving, setSaving] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [alert, setAlert] = useState<AlertState>(null)
+
+  useEffect(() => {
+    const next = toProfileForm(user)
+    setForm(next)
+    setBaselineForm(next)
+  }, [user])
 
   const { data: invitations = [], refetch: refetchInvitations } = useQuery({
     queryKey: ['invitations'],
@@ -29,23 +94,81 @@ export default function ProfileScreen() {
 
   const acceptMut = useMutation({
     mutationFn: (token: string) => sharingService.acceptInvitation(token),
-    onSuccess: () => { toast.success('Convite aceito!'); refetchInvitations() },
-    onError: () => toast.error('Erro ao aceitar convite.'),
+    onSuccess: () => {
+      toast.success('Convite aceito com sucesso!')
+      refetchInvitations()
+    },
+    onError: () => toast.error('Não foi possível aceitar o convite.'),
   })
 
+  const hasChanges = useMemo(() => {
+    return (
+      form.name !== baselineForm.name ||
+      form.cpf !== baselineForm.cpf ||
+      form.currency !== baselineForm.currency ||
+      form.locale !== baselineForm.locale ||
+      form.timezone !== baselineForm.timezone
+    )
+  }, [form, baselineForm])
+
+  const userInitial = (user?.name?.trim().charAt(0) || 'S').toUpperCase()
+  const displayName = user?.name?.trim() || 'Sem nome'
+  const memberSince = user?.created_at
+    ? new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(user.created_at))
+    : '-'
+
+  const handleFormChange = (field: keyof ProfileForm, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
   const handleSave = async () => {
-    if (!name.trim()) { toast.error('Nome é obrigatório'); return }
+    const cleanName = form.name.trim()
+    if (!cleanName || cleanName.length < 3) {
+      setAlert({
+        title: 'Nome inválido',
+        message: 'Informe seu nome completo com pelo menos 3 caracteres.',
+        tone: 'warning',
+      })
+      return
+    }
+
+    if (!isValidCpf(form.cpf)) {
+      setAlert({
+        title: 'CPF inválido',
+        message: 'Revise o CPF informado para continuar.',
+        tone: 'warning',
+      })
+      return
+    }
+
     setSaving(true)
     try {
-      const { data } = await api.put('/api/auth/me', { name })
-      setUser(data)
-      setEditing(false)
-      toast.success('Perfil atualizado!')
-    } catch {
-      toast.error('Erro ao atualizar perfil.')
+      const { data } = await api.put('/api/auth/me', {
+        name: cleanName,
+        cpf: form.cpf,
+        currency: form.currency,
+        locale: form.locale,
+        timezone: form.timezone,
+      })
+      const updatedUser = data as User
+      setUser(updatedUser)
+      const next = toProfileForm(updatedUser)
+      setForm(next)
+      setBaselineForm(next)
+      toast.success('Perfil atualizado com sucesso!')
+    } catch (error: any) {
+      setAlert({
+        title: 'Não foi possível salvar',
+        message: error?.response?.data?.error || 'Tente novamente em alguns instantes.',
+        tone: 'error',
+      })
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleDiscardChanges = () => {
+    setForm(baselineForm)
   }
 
   const handleLogout = async () => {
@@ -55,11 +178,12 @@ export default function ProfileScreen() {
   }
 
   const handleDeleteAccount = async () => {
-    const confirmation = window.prompt(
-      'Essa acao remove sua conta e dados do app. Digite EXCLUIR para confirmar:'
-    )
-    if (confirmation !== 'EXCLUIR') {
-      toast.error('Confirmacao incorreta. Exclusao cancelada.')
+    if (deleteConfirmText.trim().toUpperCase() !== 'EXCLUIR') {
+      setAlert({
+        title: 'Confirmação incorreta',
+        message: 'Digite EXCLUIR corretamente para confirmar a remoção da conta.',
+        tone: 'warning',
+      })
       return
     }
 
@@ -67,131 +191,259 @@ export default function ProfileScreen() {
     try {
       await deleteMyAccount()
       storeLogout()
-      toast.success('Conta excluida com sucesso.')
+      setDeleteModalOpen(false)
+      toast.success('Conta excluída com sucesso.')
       navigate('/login', { replace: true })
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Erro ao excluir conta.')
+    } catch (error: any) {
+      setAlert({
+        title: 'Erro ao excluir conta',
+        message: error?.response?.data?.error || 'Não foi possível concluir a exclusão da conta.',
+        tone: 'error',
+      })
     } finally {
       setDeletingAccount(false)
     }
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto space-y-4">
-      <h2 className="text-lg font-bold text-gray-900">Perfil</h2>
+    <div className="mx-auto max-w-5xl space-y-4 px-3 py-4 sm:px-4 sm:py-6">
+      <Card className="overflow-hidden border-violet-100">
+        <div className="relative bg-gradient-to-r from-violet-700 via-purple-700 to-violet-600 p-5 text-white sm:p-6">
+          <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/10 blur-sm" />
+          <div className="absolute -left-8 bottom-0 h-20 w-20 rounded-full bg-white/10 blur-sm" />
 
-      {/* Avatar + basic info */}
-      <Card>
-        <div className="p-6 flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-violet-100 flex items-center justify-center">
-            {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover rounded-full" />
-            ) : (
-              <span className="text-3xl font-bold text-violet-600">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
-            )}
-          </div>
-          {!editing ? (
-            <div className="text-center">
-              <p className="text-lg font-semibold text-gray-900">{user?.name}</p>
-              <p className="text-sm text-gray-500">{user?.email}</p>
-              <button
-                onClick={() => setEditing(true)}
-                className="mt-3 text-sm text-violet-600 hover:underline font-medium"
-              >
-                Editar perfil
-              </button>
-            </div>
-          ) : (
-            <div className="w-full space-y-3">
-              <Input
-                label="Nome"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                autoFocus
-              />
-              <div className="flex gap-3">
-                <Button variant="outline" fullWidth onClick={() => { setEditing(false); setName(user?.name || '') }}>
-                  Cancelar
-                </Button>
-                <Button fullWidth loading={saving} onClick={handleSave}>Salvar</Button>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-2xl font-bold">
+                {userInitial}
+              </div>
+              <div>
+                <p className="text-sm text-violet-100">Minha conta</p>
+                <h2 className="text-2xl font-bold leading-tight">{displayName}</h2>
+                <p className="text-sm text-violet-100">{user?.email}</p>
               </div>
             </div>
-          )}
-        </div>
-      </Card>
 
-      {/* Account info */}
-      <Card title="Informações da conta">
-        <div className="px-4 pb-4 space-y-3">
-          <div className="flex items-center justify-between py-2 border-b border-gray-50">
-            <span className="text-sm text-gray-600">Email</span>
-            <span className="text-sm font-medium text-gray-900">{user?.email}</span>
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-50">
-            <span className="text-sm text-gray-600">Moeda</span>
-            <span className="text-sm font-medium text-gray-900">{user?.currency || 'BRL'}</span>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-600">Fuso horário</span>
-            <span className="text-sm font-medium text-gray-900 text-right">{user?.timezone || 'America/Sao_Paulo'}</span>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <Badge color="purple" className="bg-white/20 text-white">
+                Membro desde {memberSince}
+              </Badge>
+              {user?.email_verified && (
+                <Badge color="green" className="bg-emerald-100 text-emerald-700">
+                  Email verificado
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Pending invitations */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card title="Dados pessoais" className="border-slate-200">
+          <div className="space-y-3 px-4 pb-4">
+            <Input
+              label="Nome completo"
+              value={form.name}
+              onChange={e => handleFormChange('name', e.target.value)}
+              leftIcon={<UserRound size={16} />}
+              autoComplete="name"
+              className="h-11 rounded-xl border-slate-300 bg-slate-50"
+            />
+            <Input
+              label="CPF"
+              value={form.cpf}
+              onChange={e => handleFormChange('cpf', formatCpf(e.target.value))}
+              inputMode="numeric"
+              className="h-11 rounded-xl border-slate-300 bg-slate-50"
+            />
+            <Input
+              label="Email"
+              value={user?.email || ''}
+              disabled
+              leftIcon={<Mail size={16} />}
+              className="h-11 rounded-xl border-slate-200 bg-slate-100 text-slate-500"
+            />
+          </div>
+        </Card>
+
+        <Card title="Preferências" className="border-slate-200">
+          <div className="space-y-3 px-4 pb-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Moeda</label>
+              <select
+                value={form.currency}
+                onChange={e => handleFormChange('currency', e.target.value)}
+                className="h-11 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition-all focus:ring-2 focus:ring-violet-500"
+              >
+                {CURRENCIES.map(currency => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Idioma</label>
+              <select
+                value={form.locale}
+                onChange={e => handleFormChange('locale', e.target.value)}
+                className="h-11 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition-all focus:ring-2 focus:ring-violet-500"
+              >
+                {LOCALES.map(locale => (
+                  <option key={locale} value={locale}>
+                    {locale}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Fuso horário</label>
+              <select
+                value={form.timezone}
+                onChange={e => handleFormChange('timezone', e.target.value)}
+                className="h-11 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition-all focus:ring-2 focus:ring-violet-500"
+              >
+                {[...new Set([...TIMEZONES, form.timezone])].map(timezone => (
+                  <option key={timezone} value={timezone}>
+                    {timezone}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-xl border border-violet-100 bg-violet-50 px-3 py-2">
+              <div className="flex items-center gap-2 text-violet-700">
+                <ShieldCheck size={14} />
+                <p className="text-xs font-medium">Seus dados são protegidos e usados apenas para sua experiência no app.</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       {Array.isArray(invitations) && invitations.length > 0 && (
-        <Card title="Convites pendentes">
-          <div className="px-4 pb-4 space-y-3">
+        <Card title="Convites pendentes" className="border-violet-100">
+          <div className="space-y-3 px-4 pb-4">
             {invitations.map((inv: any) => (
-              <div key={inv.token || inv.id} className="flex items-start gap-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
-                <User size={16} className="text-violet-500 flex-shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {inv.account_name || 'Conta compartilhada'}
-                  </p>
-                  <p className="text-xs text-gray-500">De: {inv.invited_by || inv.from_name || 'Alguém'}</p>
-                  <Badge color="purple" className="mt-1">{inv.role || 'viewer'}</Badge>
+              <div key={inv.token || inv.id} className="flex items-start gap-3 rounded-xl border border-violet-100 bg-violet-50 p-3">
+                <UserRound size={16} className="mt-0.5 flex-shrink-0 text-violet-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-800">{inv.account_name || 'Conta compartilhada'}</p>
+                  <p className="text-xs text-slate-500">De: {inv.invited_by || inv.from_name || 'Convite recebido'}</p>
+                  <Badge color="purple" className="mt-1">
+                    {inv.role || 'viewer'}
+                  </Badge>
                 </div>
-                <button
+                <Button
+                  size="sm"
                   onClick={() => acceptMut.mutate(inv.token)}
-                  disabled={acceptMut.isPending}
-                  className="text-green-500 hover:text-green-700 transition-colors p-1"
-                  title="Aceitar"
+                  loading={acceptMut.isPending}
+                  className="rounded-lg"
+                  leftIcon={<Check size={14} />}
                 >
-                  <Check size={18} />
-                </button>
+                  Aceitar
+                </Button>
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* Logout */}
-      <Button
-        variant="danger"
-        fullWidth
-        onClick={handleLogout}
-        leftIcon={<LogOut size={16} />}
-      >
-        Sair da conta
-      </Button>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card title="Ações de conta" className="border-slate-200">
+          <div className="space-y-3 px-4 pb-4">
+            <Button
+              fullWidth
+              loading={saving}
+              disabled={!hasChanges}
+              onClick={handleSave}
+              className="h-11 rounded-xl"
+            >
+              Salvar alterações
+            </Button>
+            <Button
+              fullWidth
+              variant="outline"
+              disabled={!hasChanges}
+              onClick={handleDiscardChanges}
+              className="h-11 rounded-xl"
+            >
+              Descartar alterações
+            </Button>
+            <Button
+              fullWidth
+              variant="danger"
+              onClick={handleLogout}
+              leftIcon={<LogOut size={16} />}
+              className="h-11 rounded-xl"
+            >
+              Sair da conta
+            </Button>
+          </div>
+        </Card>
 
-      <Card title="Zona de perigo">
-        <div className="px-4 pb-4">
-          <p className="text-sm text-gray-600 mb-3">
-            Ao excluir sua conta, seus dados deixam de aparecer no sistema e a acao nao pode ser desfeita.
-          </p>
-          <Button
-            variant="danger"
-            fullWidth
-            loading={deletingAccount}
-            onClick={handleDeleteAccount}
-            leftIcon={<AlertTriangle size={16} />}
-          >
-            Excluir minha conta
-          </Button>
+        <Card title="Zona de perigo" className="border-rose-100">
+          <div className="space-y-3 px-4 pb-4">
+            <p className="text-sm text-slate-600">
+              Ao excluir sua conta, seus dados deixarão de aparecer no sistema e a ação não poderá ser desfeita.
+            </p>
+            <Button
+              fullWidth
+              variant="danger"
+              onClick={() => {
+                setDeleteConfirmText('')
+                setDeleteModalOpen(true)
+              }}
+              leftIcon={<AlertTriangle size={16} />}
+              className="h-11 rounded-xl"
+            >
+              Excluir minha conta
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      <Modal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Confirmar exclusão da conta"
+        size="sm"
+        footer={
+          <div className="flex gap-2">
+            <Button fullWidth variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button fullWidth variant="danger" loading={deletingAccount} onClick={handleDeleteAccount}>
+              Excluir conta
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+            <p className="text-sm font-medium text-rose-700">
+              Esta ação é permanente. Para confirmar, digite <strong>EXCLUIR</strong>.
+            </p>
+          </div>
+          <Input
+            label="Confirmação"
+            value={deleteConfirmText}
+            onChange={e => setDeleteConfirmText(e.target.value)}
+            placeholder="Digite EXCLUIR"
+            className="h-11 rounded-xl border-slate-300 bg-slate-50"
+          />
         </div>
-      </Card>
+      </Modal>
+
+      <AlertModal
+        open={Boolean(alert)}
+        title={alert?.title || ''}
+        message={alert?.message || ''}
+        tone={alert?.tone}
+        onClose={() => setAlert(null)}
+      />
     </div>
   )
 }
