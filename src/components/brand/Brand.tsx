@@ -53,10 +53,6 @@ export function BrandWordmark({
         <span className="font-normal" style={{ color: BRAND.palette.vividViolet }}>
           {BRAND.accentWord}
         </span>
-        <span
-          className="mb-[0.14em] ml-0.5 inline-block h-2.5 w-2.5 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-          style={{ background: `linear-gradient(135deg, ${BRAND.palette.goldStart}, ${BRAND.palette.goldEnd})` }}
-        />
       </div>
       {showSlogan && (
         <span className="mt-1 text-[10px] uppercase tracking-[0.28em] text-slate-500">
@@ -68,7 +64,7 @@ export function BrandWordmark({
 }
 
 export function BrandLockup({
-  iconSize = 'md',
+  iconSize: _iconSize = 'md',
   wordmarkSize = 'md',
   showSlogan = false,
   className,
@@ -79,8 +75,7 @@ export function BrandLockup({
   className?: string
 }) {
   return (
-    <div className={cn('inline-flex items-center gap-2.5', className)}>
-      <BrandIcon size={iconSize} />
+    <div className={cn('inline-flex items-center', className)}>
       <BrandWordmark size={wordmarkSize} showSlogan={showSlogan} />
     </div>
   )

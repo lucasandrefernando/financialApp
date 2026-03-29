@@ -10,7 +10,7 @@ import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
-import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { BrandWordmark } from '../../components/brand/Brand'
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
@@ -89,8 +89,7 @@ export default function CompleteProfileScreen() {
       <main className="mx-auto flex w-full max-w-6xl items-center justify-center overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_-36px_rgba(76,29,149,0.38)] p-6 sm:p-8 lg:min-h-[720px] lg:p-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <BrandIcon size="md" className="mx-auto" />
-            <BrandWordmark size="sm" className="mt-4" />
+            <BrandWordmark size="sm" className="justify-center" />
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Cadastro complementar</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Finalize seu perfil</h2>
             <p className="mt-1 text-sm text-slate-600">Para continuar, confirme seu nome completo e CPF.</p>

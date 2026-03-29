@@ -9,7 +9,7 @@ import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
-import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { BrandWordmark } from '../../components/brand/Brand'
 
 const schema = z
   .object({
@@ -103,7 +103,6 @@ export default function ResetPasswordScreen() {
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7fb] via-[#f1f2f8] to-[#ede9fe] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <BrandIcon size="lg" className="mx-auto mb-4" />
           <BrandWordmark size="md" className="justify-center" />
           <p className="text-slate-500 mt-2">Nova senha</p>
         </div>

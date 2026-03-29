@@ -13,7 +13,7 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { formatCurrency } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
-import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { BrandWordmark } from '../../components/brand/Brand'
 
 // Step 1: Personal data
 const step1Schema = z.object({
@@ -157,7 +157,6 @@ export default function OnboardingWizard() {
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-6">
-          <BrandIcon size="md" className="mb-3" />
           <BrandWordmark size="md" className="justify-center" />
           <h1 className="text-xl font-bold text-gray-900">Configurar conta</h1>
           <p className="text-gray-500 text-sm mt-1">Passo {step} de 3</p>
