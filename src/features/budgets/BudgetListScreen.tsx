@@ -20,7 +20,7 @@ const PERIODS = [
   { value: 'yearly', label: 'Anual' },
 ]
 const PERIOD_LABELS: Record<string, string> = { weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' }
-const PERIOD_COLORS: Record<string, string> = { weekly: 'blue', monthly: 'indigo', yearly: 'purple' }
+const PERIOD_COLORS: Record<string, string> = { weekly: 'purple', monthly: 'purple', yearly: 'purple' }
 
 interface FormData { category_id: string; amount: string; period: string; alert_threshold: number }
 const defaultForm: FormData = { category_id: '', amount: '', period: 'monthly', alert_threshold: 80 }
@@ -111,7 +111,7 @@ export default function BudgetListScreen() {
                   <Badge color={PERIOD_COLORS[b.period] as any}>{PERIOD_LABELS[b.period]}</Badge>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(b)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"><Edit2 size={14} /></button>
+                  <button onClick={() => openEdit(b)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors"><Edit2 size={14} /></button>
                   <button onClick={() => handleDelete(b.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function BudgetListScreen() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium text-gray-700">Alerta em</label>
-              <span className="text-sm text-indigo-600 font-medium">{form.alert_threshold}%</span>
+              <span className="text-sm text-violet-600 font-medium">{form.alert_threshold}%</span>
             </div>
             <input
               type="range"
@@ -177,7 +177,7 @@ export default function BudgetListScreen() {
               step={5}
               value={form.alert_threshold}
               onChange={e => setForm(f => ({ ...f, alert_threshold: parseInt(e.target.value) }))}
-              className="w-full accent-indigo-600"
+              className="w-full accent-violet-600"
             />
             <div className="flex justify-between text-xs text-gray-400 mt-0.5">
               <span>50%</span>

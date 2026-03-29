@@ -24,7 +24,7 @@ export function BottomNav() {
             end={to === '/'}
             className={({ isActive }) => cn(
               'flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors',
-              isActive ? 'text-indigo-600' : 'text-gray-400'
+              isActive ? 'text-violet-600' : 'text-gray-400'
             )}
           >
             {({ isActive }) => (

@@ -13,7 +13,7 @@ import SharingModal from './SharingModal'
 import { cn } from '../../lib/utils'
 import type { BankAccount } from '../../types'
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
+const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC', '#D946EF', '#F0ABFC']
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Conta Corrente' },
   { value: 'savings', label: 'Poupança' },
@@ -25,7 +25,7 @@ const TYPE_LABELS: Record<string, string> = {
   checking: 'Corrente', savings: 'Poupança', investment: 'Investimentos', cash: 'Dinheiro', digital_wallet: 'Digital'
 }
 const ROLE_LABELS: Record<string, string> = { owner: 'Proprietário', editor: 'Editor', viewer: 'Visualizador' }
-const ROLE_COLORS: Record<string, string> = { owner: 'indigo', editor: 'blue', viewer: 'gray' }
+const ROLE_COLORS: Record<string, string> = { owner: 'purple', editor: 'purple', viewer: 'gray' }
 
 interface AccountFormData {
   name: string
@@ -134,10 +134,10 @@ export default function AccountListScreen() {
                   {acc.bank_name && <p className="text-xs text-gray-500 mt-0.5">{acc.bank_name}</p>}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(acc)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
+                  <button onClick={() => openEdit(acc)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors" title="Editar">
                     <Edit2 size={14} />
                   </button>
-                  <button onClick={() => setSharingAccount(acc)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors" title="Compartilhar">
+                  <button onClick={() => setSharingAccount(acc)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors" title="Compartilhar">
                     <Share2 size={14} />
                   </button>
                   <button onClick={() => handleDelete(acc.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors" title="Excluir">
@@ -191,7 +191,7 @@ export default function AccountListScreen() {
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <label className="text-sm font-medium text-gray-700">Incluir no total</label>
             <button type="button" onClick={() => setForm(f => ({ ...f, include_in_total: !f.include_in_total }))}
-              className={cn('w-10 h-6 rounded-full transition-colors relative', form.include_in_total ? 'bg-indigo-600' : 'bg-gray-300')}
+              className={cn('w-10 h-6 rounded-full transition-colors relative', form.include_in_total ? 'bg-violet-600' : 'bg-gray-300')}
             >
               <span className={cn('absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform', form.include_in_total ? 'translate-x-4 left-0.5' : 'left-0.5')} />
             </button>

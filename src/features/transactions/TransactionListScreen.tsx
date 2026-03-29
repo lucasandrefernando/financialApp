@@ -242,27 +242,27 @@ export default function TransactionListScreen() {
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 lg:pb-6">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-800 px-5 py-5 text-white shadow-xl">
-        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-cyan-300/20 blur-md" />
-        <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-blue-300/20 blur-md" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-violet-900 to-purple-800 px-5 py-5 text-white shadow-xl">
+        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-300/20 blur-md" />
+        <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-purple-300/20 blur-md" />
 
         <div className="relative space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-100/90">Transações</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-violet-100/90">Transações</p>
             <h2 className="text-xl font-bold capitalize">{monthLabel}</h2>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-blue-100">Receitas</p>
+              <p className="text-[11px] uppercase tracking-wide text-violet-100">Receitas</p>
               <p className="mt-1 text-sm font-bold tabular-nums">{formatCurrency(summary.income)}</p>
             </div>
             <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-blue-100">Gastos</p>
+              <p className="text-[11px] uppercase tracking-wide text-violet-100">Gastos</p>
               <p className="mt-1 text-sm font-bold tabular-nums">{formatCurrency(summary.expenses)}</p>
             </div>
             <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-blue-100">Saldo</p>
+              <p className="text-[11px] uppercase tracking-wide text-violet-100">Saldo</p>
               <p className={cn('mt-1 text-sm font-bold tabular-nums', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
                 {formatCurrency(summary.balance)}
               </p>
@@ -282,7 +282,7 @@ export default function TransactionListScreen() {
                 setPage(1)
               }}
               placeholder="Buscar por descrição, categoria ou conta..."
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             {searchInput && (
               <button
@@ -366,7 +366,7 @@ export default function TransactionListScreen() {
               className={cn(
                 'rounded-xl border px-3 py-2 text-xs font-semibold transition-colors',
                 usingCustomDateRange
-                  ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
               )}
             >
@@ -538,7 +538,7 @@ export default function TransactionListScreen() {
 
       <button
         onClick={() => setAddOpen(true)}
-        className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-lg transition-all hover:scale-[1.03] hover:from-blue-700 hover:to-cyan-700 lg:bottom-6"
+        className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-lg transition-all hover:scale-[1.03] hover:from-violet-700 hover:to-purple-700 lg:bottom-6"
         aria-label="Adicionar transação"
       >
         <Plus size={24} />

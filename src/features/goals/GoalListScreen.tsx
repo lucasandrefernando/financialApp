@@ -13,14 +13,14 @@ import { toast } from '../../components/ui/Toast'
 import { cn } from '../../lib/utils'
 import type { Goal } from '../../types'
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
+const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC', '#D946EF', '#F0ABFC']
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Ativa' },
   { value: 'paused', label: 'Pausada' },
   { value: 'completed', label: 'Concluída' },
   { value: 'cancelled', label: 'Cancelada' },
 ]
-const STATUS_COLORS: Record<string, string> = { active: 'green', paused: 'yellow', completed: 'indigo', cancelled: 'red' }
+const STATUS_COLORS: Record<string, string> = { active: 'green', paused: 'yellow', completed: 'purple', cancelled: 'red' }
 const STATUS_LABELS: Record<string, string> = { active: 'Ativa', paused: 'Pausada', completed: 'Concluída', cancelled: 'Cancelada' }
 
 interface GoalFormData {
@@ -186,7 +186,7 @@ export default function GoalListScreen() {
           <Input label="Nome *" placeholder="Ex: Viagem para Europa" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Descrição</label>
-            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
               value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">

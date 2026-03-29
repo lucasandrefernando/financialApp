@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2, Wallet, CheckCircle } from 'lucide-react'
+import { Plus, Trash2, CheckCircle } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { accountsService } from '../../services/accounts'
 import { incomeService } from '../../services/income'
@@ -13,6 +13,7 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { formatCurrency } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
 
 // Step 1: Personal data
 const step1Schema = z.object({
@@ -42,7 +43,7 @@ interface IncomeDraft {
   account_idx: number
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6']
+const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC']
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Conta Corrente' },
   { value: 'savings', label: 'Poupança' },
@@ -156,9 +157,8 @@ export default function OnboardingWizard() {
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 mb-3">
-            <Wallet size={24} className="text-white" />
-          </div>
+          <BrandIcon size="md" className="mb-3" />
+          <BrandWordmark size="md" className="justify-center" />
           <h1 className="text-xl font-bold text-gray-900">Configurar conta</h1>
           <p className="text-gray-500 text-sm mt-1">Passo {step} de 3</p>
         </div>
@@ -166,7 +166,7 @@ export default function OnboardingWizard() {
         {/* Progress */}
         <div className="flex gap-2 mb-6">
           {[1, 2, 3].map(s => (
-            <div key={s} className={cn('flex-1 h-1.5 rounded-full', s <= step ? 'bg-indigo-600' : 'bg-gray-200')} />
+            <div key={s} className={cn('flex-1 h-1.5 rounded-full', s <= step ? 'bg-violet-600' : 'bg-gray-200')} />
           ))}
         </div>
 

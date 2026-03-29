@@ -47,11 +47,11 @@ export default function DashboardScreen() {
       </div>
 
       {/* Hero balance card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-800 p-5 text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 to-violet-800 p-5 text-white shadow-lg">
         <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
         <div className="absolute -right-2 -bottom-10 w-28 h-28 rounded-full bg-white/5" />
         <div className="relative">
-          <p className="text-indigo-200 text-xs font-medium uppercase tracking-wide mb-1">Total em Contas</p>
+          <p className="text-violet-200 text-xs font-medium uppercase tracking-wide mb-1">Total em Contas</p>
           <p className="text-3xl font-bold tracking-tight">{formatCurrency(data?.total_balance ?? 0)}</p>
           <div className="mt-4 flex items-center gap-1">
             <div className={cn('flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full',
@@ -88,8 +88,8 @@ export default function DashboardScreen() {
 
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <Scale size={16} className="text-indigo-600" />
+            <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+              <Scale size={16} className="text-violet-600" />
             </div>
           </div>
           <p className="text-xs text-gray-400 font-medium">Saldo</p>
@@ -248,13 +248,13 @@ export default function DashboardScreen() {
 
       {/* AI Insights */}
       {Array.isArray(insights) && insights.length > 0 && (
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-4">
+        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100 p-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center">
               <Lightbulb size={14} className="text-white" />
             </div>
             <p className="text-sm font-semibold text-gray-900">Insights Financeiros</p>
-            <span className="ml-auto text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">IA</span>
+            <span className="ml-auto text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium">IA</span>
           </div>
           <div className="space-y-3">
             {insights.slice(0, 3).map((tip: any, i: number) => (
@@ -270,7 +270,7 @@ export default function DashboardScreen() {
       {/* FAB */}
       <button
         onClick={() => setAddOpen(true)}
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-indigo-600 text-white shadow-xl flex items-center justify-center z-30 hover:bg-indigo-700 active:scale-95 transition-all"
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-violet-600 text-white shadow-xl flex items-center justify-center z-30 hover:bg-violet-700 active:scale-95 transition-all"
         aria-label="Adicionar transação"
       >
         <Plus size={24} />

@@ -1,8 +1,9 @@
-import { ChevronLeft, ChevronRight, Bell, Wallet } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Bell } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useAuthStore } from '../../stores/authStore'
 import { formatMonth } from '../../utils/formatters'
+import { BrandWordmark } from '../brand/Brand'
 
 export function Header() {
   const { selectedMonth, setSelectedMonth } = useAppStore()
@@ -23,8 +24,7 @@ export function Header() {
   return (
     <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-100 sticky top-0 z-30 flex-shrink-0">
       <div className="flex items-center gap-2 lg:hidden">
-        <Wallet size={20} className="text-indigo-600" />
-        <span className="font-bold text-indigo-600 text-base">FinanceApp</span>
+        <BrandWordmark size="sm" />
       </div>
 
       <div className="flex items-center gap-1 mx-auto lg:mx-0">
@@ -49,7 +49,7 @@ export function Header() {
         </button>
         <Link
           to="/profile"
-          className="h-8 w-8 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-600 text-sm font-bold flex-shrink-0"
+          className="h-8 w-8 rounded-full flex items-center justify-center bg-violet-100 text-violet-600 text-sm font-bold flex-shrink-0"
         >
           {user?.name?.charAt(0).toUpperCase() ?? 'U'}
         </Link>

@@ -124,7 +124,7 @@ router.post('/', async (req, res) => {
         bank_name || null,
         initial_balance,
         initial_balance,
-        color || '#4F46E5',
+        color || '#7C3AED',
         icon || 'wallet',
         include_in_total,
         notes || null,

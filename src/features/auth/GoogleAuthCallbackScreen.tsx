@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Wallet } from 'lucide-react'
 import { getMe, persistAuthTokens } from '../../services/auth'
 import { useAuthStore } from '../../stores/authStore'
 import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
 
 function parseAuthHash(hash: string) {
   const params = new URLSearchParams(hash.replace(/^#/, ''))
@@ -36,7 +36,7 @@ export default function GoogleAuthCallbackScreen() {
         if (!mounted) return
         setAlert({
           title: 'Falha no login com Google',
-          message: 'N√£o foi poss√≠vel autenticar com o Google. Tente novamente.',
+          message: 'N„o foi possÌvel autenticar com o Google. Tente novamente.',
           tone: 'error',
         })
         return
@@ -45,8 +45,8 @@ export default function GoogleAuthCallbackScreen() {
       if (!accessToken || !refreshToken) {
         if (!mounted) return
         setAlert({
-          title: 'Token inv√°lido',
-          message: 'N√£o recebemos os tokens de autentica√ß√£o do Google.',
+          title: 'Token inv·lido',
+          message: 'N„o recebemos os tokens de autenticaÁ„o do Google.',
           tone: 'error',
         })
         return
@@ -68,7 +68,7 @@ export default function GoogleAuthCallbackScreen() {
         if (!mounted) return
         setAlert({
           title: 'Falha ao finalizar login',
-          message: 'N√£o foi poss√≠vel concluir o login com Google.',
+          message: 'N„o foi possÌvel concluir o login com Google.',
           tone: 'error',
         })
       }
@@ -83,10 +83,9 @@ export default function GoogleAuthCallbackScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-        <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600">
-          <Wallet size={32} className="text-white" />
-        </div>
-        <h1 className="mb-2 text-xl font-semibold text-gray-900">Finalizando login...</h1>
+        <BrandIcon size="lg" className="mb-4" />
+        <BrandWordmark size="md" className="justify-center" />
+        <h1 className="mb-2 mt-3 text-xl font-semibold text-gray-900">Finalizando login...</h1>
         <p className="text-sm text-gray-600">Estamos validando sua conta Google.</p>
       </div>
 

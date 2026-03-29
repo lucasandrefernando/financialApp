@@ -83,11 +83,11 @@ export default function ProfileScreen() {
       {/* Avatar + basic info */}
       <Card>
         <div className="p-6 flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full bg-violet-100 flex items-center justify-center">
             {user?.avatar_url ? (
               <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover rounded-full" />
             ) : (
-              <span className="text-3xl font-bold text-indigo-600">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+              <span className="text-3xl font-bold text-violet-600">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
             )}
           </div>
           {!editing ? (
@@ -96,7 +96,7 @@ export default function ProfileScreen() {
               <p className="text-sm text-gray-500">{user?.email}</p>
               <button
                 onClick={() => setEditing(true)}
-                className="mt-3 text-sm text-indigo-600 hover:underline font-medium"
+                className="mt-3 text-sm text-violet-600 hover:underline font-medium"
               >
                 Editar perfil
               </button>
@@ -143,14 +143,14 @@ export default function ProfileScreen() {
         <Card title="Convites pendentes">
           <div className="px-4 pb-4 space-y-3">
             {invitations.map((inv: any) => (
-              <div key={inv.token || inv.id} className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                <User size={16} className="text-indigo-500 flex-shrink-0 mt-0.5" />
+              <div key={inv.token || inv.id} className="flex items-start gap-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
+                <User size={16} className="text-violet-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {inv.account_name || 'Conta compartilhada'}
                   </p>
                   <p className="text-xs text-gray-500">De: {inv.invited_by || inv.from_name || 'Alguém'}</p>
-                  <Badge color="indigo" className="mt-1">{inv.role || 'viewer'}</Badge>
+                  <Badge color="purple" className="mt-1">{inv.role || 'viewer'}</Badge>
                 </div>
                 <button
                   onClick={() => acceptMut.mutate(inv.token)}

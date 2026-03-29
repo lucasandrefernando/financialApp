@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
       priority = 3,
       status = 'active',
       icon = 'target',
-      color = '#4F46E5',
+      color = '#7C3AED',
     } = req.body
 
     if (!name || !target_amount) {

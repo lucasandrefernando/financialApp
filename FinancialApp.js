@@ -36,7 +36,7 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true, app: 'financial-app', time: new Date().toISOString() })
+  res.json({ ok: true, app: 'selfmoney', time: new Date().toISOString() })
 })
 
 function normalizeBasePath(value) {
@@ -143,7 +143,7 @@ app.use((err, req, res, next) => {
 })
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(`Financial App rodando em ${HOST}:${PORT}`)
+  console.log(`SelfMoney rodando em ${HOST}:${PORT}`)
   console.log(`Base path configurada: ${BASE_PATH}`)
 })
 

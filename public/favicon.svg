@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SelfMoney">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6A1B9A" />
+      <stop offset="100%" stop-color="#4B0082" />
+    </linearGradient>
+    <linearGradient id="dot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#DAA520" />
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)" />
+  <path d="M20 41V22h12c6 0 9 2.8 9 7 0 3.7-2.6 6.1-7.1 6.1h-6.4V41zM27.5 30.4h4.2c1.9 0 2.9-.8 2.9-2.3 0-1.5-1-2.3-2.9-2.3h-4.2z" fill="#fff"/>
+  <circle cx="47" cy="20" r="4" fill="url(#dot)" />
+</svg>
+

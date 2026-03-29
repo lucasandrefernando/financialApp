@@ -9,6 +9,7 @@ import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido.'),
@@ -57,11 +58,9 @@ export default function ForgotPasswordScreen() {
     <div className="min-h-screen bg-gradient-to-br from-[#f7f7fb] via-[#f1f2f8] to-[#ede9fe] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-violet-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-2xl">💼</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">FinanceApp</h1>
-          <p className="text-slate-500 mt-1">Recuperar senha</p>
+          <BrandIcon size="lg" className="mx-auto mb-4" />
+          <BrandWordmark size="md" className="justify-center" />
+          <p className="text-slate-500 mt-2">Recuperar senha</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

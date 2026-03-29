@@ -17,21 +17,16 @@ import AccountListScreen from './features/accounts/AccountListScreen'
 import BudgetListScreen from './features/budgets/BudgetListScreen'
 import GoalListScreen from './features/goals/GoalListScreen'
 import ProfileScreen from './features/profile/ProfileScreen'
+import { resolveAppBasePath } from './lib/basePath'
 
-function normalizeBasePath(value: string | undefined) {
-  if (!value || value === '/') return '/'
-  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
-  return withLeadingSlash.replace(/\/+$/, '')
-}
-
-const ROUTER_BASENAME = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
+const ROUTER_BASENAME = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore()
   if (isLoading) return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
       <div className="flex flex-col items-center gap-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
         <p className="text-sm text-gray-500">Carregando...</p>
       </div>
     </div>

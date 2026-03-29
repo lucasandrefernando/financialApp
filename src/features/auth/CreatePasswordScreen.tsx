@@ -3,12 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowRight, Lock, ShieldCheck, Wallet } from 'lucide-react'
+import { ArrowRight, Lock, ShieldCheck } from 'lucide-react'
 import { createPassword } from '../../services/auth'
 import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
 
 const schema = z
   .object({
@@ -30,19 +32,14 @@ type AlertState = {
   onConfirm?: () => void
 } | null
 
-function normalizeBasePath(value: string | undefined) {
-  if (!value || value === '/') return ''
-  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
-  return withLeadingSlash.replace(/\/+$/, '')
-}
-
 export default function CreatePasswordScreen() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const status = searchParams.get('status') || ''
-  const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const heroImageSrc = `${appBasePath}/api/auth/media/login-03`
+  const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
+  const basePrefix = toBasePrefix(appBasePath)
+  const heroImageSrc = `${basePrefix}/api/auth/media/login-03`
 
   const [alert, setAlert] = useState<AlertState>(null)
 
@@ -157,9 +154,8 @@ export default function CreatePasswordScreen() {
             </div>
 
             <div className="mb-8 text-center">
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                <Wallet size={24} />
-              </div>
+              <BrandIcon size="md" className="mx-auto" />
+              <BrandWordmark size="sm" className="mt-4" />
               <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Segurança</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Criar senha</h2>
               <p className="mt-1 text-sm text-slate-600">Escolha uma senha segura para concluir seu cadastro.</p>

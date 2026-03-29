@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight, Wallet } from 'lucide-react'
+import { Home, ArrowLeftRight, CreditCard, Target, User, PieChart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
 import { cn } from '../../lib/utils'
+import { BrandLockup } from '../brand/Brand'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
@@ -25,10 +26,7 @@ export function Sidebar() {
         sidebarCollapsed ? 'justify-center' : 'justify-between'
       )}>
         {!sidebarCollapsed && (
-          <div className="flex items-center gap-2">
-            <Wallet size={20} className="text-indigo-600" />
-            <span className="font-bold text-indigo-600 text-lg">FinanceApp</span>
-          </div>
+          <BrandLockup iconSize="sm" wordmarkSize="sm" />
         )}
         <button
           onClick={toggleSidebar}
@@ -49,7 +47,7 @@ export function Sidebar() {
                 className={({ isActive }) => cn(
                   'flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-600'
+                    ? 'bg-violet-50 text-violet-600'
                     : 'text-gray-600 hover:bg-gray-100',
                   sidebarCollapsed && 'justify-center px-0'
                 )}

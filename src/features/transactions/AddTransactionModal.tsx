@@ -199,8 +199,8 @@ export default function AddTransactionModal({ open, onClose }: Props) {
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
                     expenseType === et.value
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                      ? 'bg-violet-600 text-white border-violet-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-violet-400'
                   )}
                 >
                   {et.label}
@@ -221,8 +221,8 @@ export default function AddTransactionModal({ open, onClose }: Props) {
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
                     expenseStatus === s.value
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                      ? 'bg-violet-600 text-white border-violet-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-violet-400'
                   )}
                 >
                   {s.label}
@@ -237,7 +237,7 @@ export default function AddTransactionModal({ open, onClose }: Props) {
             <button
               type="button"
               onClick={() => expForm.setValue('is_installment', !isInstallment)}
-              className={cn('w-10 h-6 rounded-full transition-colors relative', isInstallment ? 'bg-indigo-600' : 'bg-gray-300')}
+              className={cn('w-10 h-6 rounded-full transition-colors relative', isInstallment ? 'bg-violet-600' : 'bg-gray-300')}
             >
               <span className={cn('absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform', isInstallment ? 'translate-x-4 left-0.5' : 'left-0.5')} />
             </button>
@@ -255,14 +255,14 @@ export default function AddTransactionModal({ open, onClose }: Props) {
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                 placeholder="Pressione Enter para adicionar"
-                className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
               <Button type="button" variant="outline" size="sm" onClick={addTag}>+</Button>
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs">
+                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full text-xs">
                     {tag}
                     <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
                   </span>
@@ -275,7 +275,7 @@ export default function AddTransactionModal({ open, onClose }: Props) {
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Observação</label>
             <textarea
               rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
               {...expForm.register('notes')}
             />
           </div>
@@ -305,7 +305,7 @@ export default function AddTransactionModal({ open, onClose }: Props) {
                 <button key={s.value} type="button"
                   onClick={() => incForm.setValue('status', s.value as any)}
                   className={cn('px-3 py-1 rounded-full text-xs font-medium border transition-colors',
-                    incStatus === s.value ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                    incStatus === s.value ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-300 hover:border-violet-400'
                   )}>{s.label}</button>
               ))}
             </div>
@@ -318,14 +318,14 @@ export default function AddTransactionModal({ open, onClose }: Props) {
               <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                 placeholder="Pressione Enter para adicionar"
-                className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
               <Button type="button" variant="outline" size="sm" onClick={addTag}>+</Button>
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs">
+                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-violet-50 text-violet-700 rounded-full text-xs">
                     {tag}
                     <button type="button" onClick={() => setTags(t => t.filter(x => x !== tag))}><X size={10} /></button>
                   </span>
@@ -336,7 +336,7 @@ export default function AddTransactionModal({ open, onClose }: Props) {
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Observação</label>
-            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" {...incForm.register('notes')} />
+            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" {...incForm.register('notes')} />
           </div>
 
           <Button type="submit" fullWidth loading={createTx.isPending}>Salvar receita</Button>
@@ -354,7 +354,7 @@ export default function AddTransactionModal({ open, onClose }: Props) {
           <Select label="Conta destino" options={accountOptions} placeholder="Selecione..." error={trfForm.formState.errors.transfer_to_account_id?.message} {...trfForm.register('transfer_to_account_id')} />
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Observação</label>
-            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" {...trfForm.register('notes')} />
+            <textarea rows={2} className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" {...trfForm.register('notes')} />
           </div>
           <Button type="submit" fullWidth loading={createTx.isPending}>Registrar transferência</Button>
         </form>

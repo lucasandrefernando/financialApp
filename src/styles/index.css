@@ -4,7 +4,10 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  body { @apply bg-gray-50 text-gray-900 font-sans; }
+  body {
+    @apply text-gray-900 font-sans;
+    background: radial-gradient(circle at 8% 8%, #f3e8ff 0%, #f8f7fc 42%, #eef0f9 100%);
+  }
 }
 
 @layer utilities {

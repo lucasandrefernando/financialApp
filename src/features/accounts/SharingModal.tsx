@@ -46,7 +46,7 @@ export default function SharingModal({ account, open, onClose }: Props) {
     onError: () => toast.error('Erro ao remover membro.'),
   })
 
-  const roleColorMap: Record<string, string> = { owner: 'indigo', editor: 'blue', viewer: 'gray' }
+  const roleColorMap: Record<string, string> = { owner: 'purple', editor: 'purple', viewer: 'gray' }
   const roleLabelMap: Record<string, string> = { owner: 'Proprietário', editor: 'Editor', viewer: 'Visualizador' }
 
   return (
@@ -62,7 +62,7 @@ export default function SharingModal({ account, open, onClose }: Props) {
           <ul className="space-y-2">
             {members.map((m: any) => (
               <li key={m.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
                   {m.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1 min-w-0">

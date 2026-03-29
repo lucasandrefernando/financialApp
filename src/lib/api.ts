@@ -1,14 +1,10 @@
 import axios from 'axios'
+import { resolveAppBasePath, toBasePrefix } from './basePath'
 
-function normalizeBasePath(value: string | undefined) {
-  if (!value || value === '/') return ''
-  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
-  return withLeadingSlash.replace(/\/+$/, '')
-}
-
-const APP_BASE_PATH = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
-const API_BASE_URL = (import.meta.env.VITE_API_URL || APP_BASE_PATH).replace(/\/+$/, '')
-const LOGIN_PATH = `${APP_BASE_PATH || ''}/login`
+const APP_BASE_PATH = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
+const APP_BASE_PREFIX = toBasePrefix(APP_BASE_PATH)
+const API_BASE_URL = (import.meta.env.VITE_API_URL || APP_BASE_PREFIX).replace(/\/+$/, '')
+const LOGIN_PATH = `${APP_BASE_PREFIX}/login`
 
 const api = axios.create({ baseURL: API_BASE_URL })
 

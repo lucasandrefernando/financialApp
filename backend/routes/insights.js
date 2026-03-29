@@ -31,7 +31,7 @@ const MOCK_INSIGHTS = [
     message:
       'Metas financeiras específicas e mensuráveis aumentam a chance de sucesso. Tente dividir grandes objetivos em marcos menores e acompanhe seu progresso regularmente.',
     icon: 'target',
-    color: '#4F46E5',
+    color: '#7C3AED',
   },
 ]
 
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
     const accountIds = accountRows.map((r) => r.account_id)
 
     if (accountIds.length === 0) {
-      return res.json({ data: [{ id: 'p-0', type: 'tip', title: 'Cadastre uma conta bancária', message: 'Para receber insights personalizados, cadastre suas contas bancárias e registre suas movimentações financeiras.', icon: 'wallet', color: '#4F46E5' }], source: 'personalized' })
+      return res.json({ data: [{ id: 'p-0', type: 'tip', title: 'Cadastre uma conta bancária', message: 'Para receber insights personalizados, cadastre suas contas bancárias e registre suas movimentações financeiras.', icon: 'wallet', color: '#7C3AED' }], source: 'personalized' })
     }
 
     const placeholders = accountIds.map(() => '?').join(',')
@@ -104,7 +104,7 @@ router.get('/', async (req, res) => {
         id: 'p-1', type: 'tip',
         title: 'Comece registrando suas movimentações',
         message: 'Você ainda não tem lançamentos no período. Registre suas receitas e despesas para receber análises personalizadas do seu perfil financeiro.',
-        icon: 'plus-circle', color: '#4F46E5',
+        icon: 'plus-circle', color: '#7C3AED',
       })
     } else {
       if (parseFloat(savingsRate) < 10 && income > 0) {
@@ -126,7 +126,7 @@ router.get('/', async (req, res) => {
           id: 'p-1', type: 'insight',
           title: `Você poupou ${fmt(savings)} esse período`,
           message: `Com receitas de ${fmt(income)} e despesas de ${fmt(expenses)}, sua taxa de poupança foi de ${savingsRate}%. Tente aumentar para 20% reduzindo gastos variáveis.`,
-          icon: 'piggy-bank', color: '#4F46E5',
+          icon: 'piggy-bank', color: '#7C3AED',
         })
       }
 

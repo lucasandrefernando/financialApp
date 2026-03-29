@@ -30,14 +30,14 @@ export async function sendEmailVerificationEmail(to, verificationToken, appUrl, 
   const verifyUrl = `${baseUrl}${normalizedBasePath}/api/auth/verify-email?token=${verificationToken}`
 
   await transporter.sendMail({
-    from: `"FinanceApp" <${mailFrom}>`,
+    from: `"SelfMoney" <${mailFrom}>`,
     to,
-    subject: 'Confirme seu e-mail e crie sua senha - FinanceApp',
+    subject: 'Confirme seu e-mail e crie sua senha - SelfMoney',
     html: `
       <div style="font-family: Inter, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; color: #111827;">
         <div style="text-align: center; margin-bottom: 28px;">
           <div style="background: linear-gradient(135deg, #6D28D9, #9333EA); width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 26px;">💼</div>
-          <h1 style="margin: 14px 0 0; font-size: 24px; color: #1f113d;">FinanceApp</h1>
+          <h1 style="margin: 14px 0 0; font-size: 24px; color: #1f113d;">SelfMoney</h1>
         </div>
 
         <h2 style="margin: 0 0 12px; font-size: 20px;">Confirme seu cadastro</h2>
@@ -67,21 +67,21 @@ export async function sendPasswordResetEmail(to, resetToken, appUrl) {
   const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
   await transporter.sendMail({
-    from: `"FinanceApp" <${mailFrom}>`,
+    from: `"SelfMoney" <${mailFrom}>`,
     to,
-    subject: 'Recuperação de senha - FinanceApp',
+    subject: 'Recuperação de senha - SelfMoney',
     html: `
       <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
         <div style="text-align: center; margin-bottom: 32px;">
-          <div style="background: #4F46E5; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
+          <div style="background: #7C3AED; width: 56px; height: 56px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;">
             <span style="color: white; font-size: 28px;">💼</span>
           </div>
-          <h1 style="color: #1e1b4b; margin-top: 16px;">FinanceApp</h1>
+          <h1 style="color: #1e1b4b; margin-top: 16px;">SelfMoney</h1>
         </div>
         <h2 style="color: #111827;">Redefinir sua senha</h2>
         <p style="color: #6B7280;">Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para criar uma nova senha.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${resetUrl}" style="background: #4F46E5; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+          <a href="${resetUrl}" style="background: #7C3AED; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
             Redefinir senha
           </a>
         </div>

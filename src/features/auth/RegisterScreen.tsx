@@ -3,21 +3,17 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowRight, CreditCard, Mail, ShieldCheck, UserRound, Wallet } from 'lucide-react'
+import { ArrowRight, CreditCard, Mail, ShieldCheck, UserRound } from 'lucide-react'
 import { register as registerUser } from '../../services/auth'
 import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
+import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
-}
-
-function normalizeBasePath(value: string | undefined) {
-  if (!value || value === '/') return ''
-  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
-  return withLeadingSlash.replace(/\/+$/, '')
 }
 
 function isValidCpf(value: string) {
@@ -60,8 +56,9 @@ type AlertState = {
 export default function RegisterScreen() {
   const navigate = useNavigate()
   const [alert, setAlert] = useState<AlertState>(null)
-  const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const heroImageSrc = `${appBasePath}/api/auth/media/login-02`
+  const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
+  const basePrefix = toBasePrefix(appBasePath)
+  const heroImageSrc = `${basePrefix}/api/auth/media/login-02`
 
   const {
     register,
@@ -142,9 +139,8 @@ export default function RegisterScreen() {
             </div>
 
             <div className="mb-8 text-center">
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                <Wallet size={24} />
-              </div>
+              <BrandIcon size="md" className="mx-auto" />
+              <BrandWordmark size="sm" className="mt-4" />
               <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Cadastro</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Crie sua conta</h2>
               <p className="mt-1 text-sm text-slate-600">Informe seus dados para receber o link de verificação.</p>

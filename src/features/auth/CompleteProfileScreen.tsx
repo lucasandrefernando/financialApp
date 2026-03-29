@@ -3,13 +3,14 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowRight, CreditCard, UserRound, Wallet } from 'lucide-react'
+import { ArrowRight, CreditCard, UserRound } from 'lucide-react'
 import { completeMyProfile } from '../../services/auth'
 import { useAuthStore } from '../../stores/authStore'
 import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
+import { BrandIcon, BrandWordmark } from '../../components/brand/Brand'
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
@@ -88,9 +89,8 @@ export default function CompleteProfileScreen() {
       <main className="mx-auto flex w-full max-w-6xl items-center justify-center overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_-36px_rgba(76,29,149,0.38)] p-6 sm:p-8 lg:min-h-[720px] lg:p-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-              <Wallet size={24} />
-            </div>
+            <BrandIcon size="md" className="mx-auto" />
+            <BrandWordmark size="sm" className="mt-4" />
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">Cadastro complementar</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Finalize seu perfil</h2>
             <p className="mt-1 text-sm text-slate-600">Para continuar, confirme seu nome completo e CPF.</p>
