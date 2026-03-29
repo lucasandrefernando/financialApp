@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
   const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
   const googleLoginUrl = `${appBasePath}/api/auth/google/start`
-  const heroImageSrc = `${appBasePath}/api/media/login-01.jpg`
+  const heroImageSrc = `${appBasePath}/api/media/login-01`
 
   const {
     register,

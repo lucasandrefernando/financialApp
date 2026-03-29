@@ -64,8 +64,19 @@ function mountApiRoutes(prefix = '') {
 function mountMediaRoutes(prefix = '') {
   const routePrefix = prefix === '/' ? '' : prefix
 
-  app.get(`${routePrefix}/api/media/:file`, (req, res) => {
-    const filename = path.basename(String(req.params.file || ''))
+  app.get(`${routePrefix}/api/media/:assetId`, (req, res) => {
+    const assetId = path.basename(String(req.params.assetId || '')).toLowerCase()
+    const mediaMap = {
+      'login-01': 'login-01.jpg',
+      'login-02': 'login-02.jpg',
+      'login-03': 'login-03.jpg',
+    }
+    const filename = mediaMap[assetId]
+
+    if (!filename) {
+      return res.status(404).json({ error: 'Arquivo nao encontrado' })
+    }
+
     const filePath = path.join(STATIC_DIR, 'img', filename)
 
     if (!fs.existsSync(filePath)) {

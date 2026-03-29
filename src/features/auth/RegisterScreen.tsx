@@ -61,7 +61,7 @@ export default function RegisterScreen() {
   const navigate = useNavigate()
   const [alert, setAlert] = useState<AlertState>(null)
   const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const heroImageSrc = `${appBasePath}/api/media/login-02.jpg`
+  const heroImageSrc = `${appBasePath}/api/media/login-02`
 
   const {
     register,

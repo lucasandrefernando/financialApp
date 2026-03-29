@@ -42,7 +42,7 @@ export default function CreatePasswordScreen() {
   const token = searchParams.get('token') || ''
   const status = searchParams.get('status') || ''
   const appBasePath = normalizeBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const heroImageSrc = `${appBasePath}/api/media/login-03.jpg`
+  const heroImageSrc = `${appBasePath}/api/media/login-03`
 
   const [alert, setAlert] = useState<AlertState>(null)
 
