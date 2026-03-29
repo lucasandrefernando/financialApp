@@ -120,12 +120,22 @@ function getPreviousDay(date: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function getTodayDateString() {
+  return new Date().toISOString().split('T')[0]
+}
+
 export default function TransactionListScreen() {
   const { selectedMonth } = useAppStore()
   const monthDateRange = useMemo(
     () => getMonthDateRange(selectedMonth.year, selectedMonth.month),
     [selectedMonth.year, selectedMonth.month]
   )
+  const defaultDateForCreate = useMemo(() => {
+    const todayDate = getTodayDateString()
+    const [y, m] = todayDate.split('-').map(Number)
+    const isSelectedCurrentMonth = y === selectedMonth.year && m === selectedMonth.month
+    return isSelectedCurrentMonth ? todayDate : monthDateRange.firstDay
+  }, [selectedMonth.year, selectedMonth.month, monthDateRange.firstDay])
 
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -285,8 +295,13 @@ export default function TransactionListScreen() {
       setDeletingId(id)
       await deleteTx.mutateAsync(id)
       toast.success('Transação excluída.')
-    } catch {
-      toast.error('Erro ao excluir transação.')
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Erro ao excluir transação.'
+      toast.error(message)
     } finally {
       setDeletingId(null)
     }
@@ -661,6 +676,7 @@ export default function TransactionListScreen() {
         initialTab={modalTab}
         editingTransaction={editingTransaction}
         allowTypeSwitch={false}
+        defaultDate={defaultDateForCreate}
       />
     </div>
   )

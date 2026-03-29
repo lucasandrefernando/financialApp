@@ -58,6 +58,7 @@ interface Props {
   initialTab?: TabType
   editingTransaction?: Transaction | null
   allowTypeSwitch?: boolean
+  defaultDate?: string
 }
 
 function toDateInput(value?: string | null) {
@@ -133,6 +134,7 @@ export default function AddTransactionModal({
   initialTab = 'expense',
   editingTransaction = null,
   allowTypeSwitch = true,
+  defaultDate = today,
 }: Props) {
   const [tab, setTab] = useState<TabType>(initialTab)
   const [tagInput, setTagInput] = useState('')
@@ -157,7 +159,7 @@ export default function AddTransactionModal({
 
   const expForm = useForm<z.infer<typeof expenseSchema>>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { date: today, status: 'completed', is_installment: false, expense_type: 'variable' },
+    defaultValues: { date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' },
   })
   const isInstallment = expForm.watch('is_installment')
   const expenseType = expForm.watch('expense_type')
@@ -165,13 +167,13 @@ export default function AddTransactionModal({
 
   const incForm = useForm<z.infer<typeof incomeSchema>>({
     resolver: zodResolver(incomeSchema),
-    defaultValues: { date: today, status: 'completed' },
+    defaultValues: { date: defaultDate, status: 'completed' },
   })
   const incStatus = incForm.watch('status')
 
   const trfForm = useForm<z.infer<typeof transferSchema>>({
     resolver: zodResolver(transferSchema),
-    defaultValues: { date: today },
+    defaultValues: { date: defaultDate },
   })
 
   useEffect(() => {
@@ -231,10 +233,21 @@ export default function AddTransactionModal({
     setTagInput('')
     setShowAdvancedExpense(false)
     setShowAdvancedIncome(false)
-    expForm.reset({ date: today, status: 'completed', is_installment: false, expense_type: 'variable' })
-    incForm.reset({ date: today, status: 'completed' })
-    trfForm.reset({ date: today })
-  }, [open, initialTab, editingTransaction, expForm, incForm, trfForm])
+    expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
+    incForm.reset({ date: defaultDate, status: 'completed' })
+    trfForm.reset({ date: defaultDate })
+  }, [open, initialTab, editingTransaction, defaultDate, expForm, incForm, trfForm])
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    const maybeError = error as any
+    const apiMessage =
+      maybeError?.response?.data?.error ||
+      maybeError?.response?.data?.message ||
+      maybeError?.message
+
+    if (typeof apiMessage === 'string' && apiMessage.trim()) return apiMessage
+    return fallback
+  }
 
   const onSubmitExpense = async (data: z.infer<typeof expenseSchema>) => {
     try {
@@ -263,11 +276,11 @@ export default function AddTransactionModal({
         toast.success('Gasto adicionado!')
       }
 
-      expForm.reset({ date: today, status: 'completed', is_installment: false, expense_type: 'variable' })
+      expForm.reset({ date: defaultDate, status: 'completed', is_installment: false, expense_type: 'variable' })
       setTags([])
       onClose()
-    } catch {
-      toast.error('Erro ao salvar movimentação.')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
     }
   }
 
@@ -291,11 +304,11 @@ export default function AddTransactionModal({
         toast.success('Receita adicionada!')
       }
 
-      incForm.reset({ date: today, status: 'completed' })
+      incForm.reset({ date: defaultDate, status: 'completed' })
       setTags([])
       onClose()
-    } catch {
-      toast.error('Erro ao salvar movimentação.')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Erro ao salvar movimentação.'))
     }
   }
 
@@ -323,10 +336,10 @@ export default function AddTransactionModal({
         toast.success('Transferência registrada!')
       }
 
-      trfForm.reset({ date: today })
+      trfForm.reset({ date: defaultDate })
       onClose()
-    } catch {
-      toast.error('Erro ao salvar transferência.')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Erro ao salvar transferência.'))
     }
   }
 
