@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   ArrowUpRight,
   CalendarClock,
+  Edit2,
   Filter,
   Plus,
   Search,
@@ -16,7 +17,7 @@ import { formatCurrency, formatDate, formatMonth } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
 import { toast } from '../../components/ui/Toast'
 import { Badge } from '../../components/ui/Badge'
-import AddTransactionModal from './AddTransactionModal'
+import AddTransactionModal, { type TabType } from './AddTransactionModal'
 import type { Transaction } from '../../types'
 
 type TypeFilter = 'all' | 'expense' | 'income' | 'transfer'
@@ -126,6 +127,8 @@ export default function TransactionListScreen() {
   const [visibleTransactions, setVisibleTransactions] = useState<Transaction[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
+  const [modalTab, setModalTab] = useState<TabType>('expense')
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -240,6 +243,18 @@ export default function TransactionListScreen() {
     }
   }
 
+  const openCreateModal = (tab: TabType) => {
+    setEditingTransaction(null)
+    setModalTab(tab)
+    setAddOpen(true)
+  }
+
+  const openEditModal = (tx: Transaction) => {
+    setEditingTransaction(tx)
+    setModalTab(tx.type as TabType)
+    setAddOpen(true)
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 lg:pb-6">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-violet-900 to-purple-800 px-5 py-5 text-white shadow-xl">
@@ -324,6 +339,30 @@ export default function TransactionListScreen() {
                 </span>
               </button>
             ))}
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => openCreateModal('expense')}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+            >
+              <ArrowDownLeft size={14} />
+              Novo gasto
+            </button>
+            <button
+              onClick={() => openCreateModal('income')}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+            >
+              <ArrowUpRight size={14} />
+              Nova receita
+            </button>
+            <button
+              onClick={() => openCreateModal('transfer')}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+            >
+              <ArrowLeftRight size={14} />
+              Nova transferência
+            </button>
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
@@ -467,7 +506,8 @@ export default function TransactionListScreen() {
                   return (
                     <div
                       key={tx.id}
-                      className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-50/80"
+                      onClick={() => openEditModal(tx)}
+                      className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-50/80"
                     >
                       <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', typeVisual.iconWrapClass)}>
                         <Icon size={17} />
@@ -488,11 +528,24 @@ export default function TransactionListScreen() {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditModal(tx)
+                          }}
+                          className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-violet-50 hover:text-violet-600"
+                          aria-label={`Editar transação ${tx.description}`}
+                        >
+                          <Edit2 size={14} />
+                        </button>
                         <p className={cn('text-sm font-bold tabular-nums', typeVisual.amountClass)}>
                           {typeVisual.prefix}{formatCurrency(amountValue)}
                         </p>
                         <button
-                          onClick={() => handleDelete(tx.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(tx.id)
+                          }}
                           disabled={deletingId === tx.id}
                           className={cn(
                             'rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500',
@@ -537,14 +590,22 @@ export default function TransactionListScreen() {
       </div>
 
       <button
-        onClick={() => setAddOpen(true)}
+        onClick={() => openCreateModal('expense')}
         className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-lg transition-all hover:scale-[1.03] hover:from-violet-700 hover:to-purple-700 lg:bottom-6"
         aria-label="Adicionar transação"
       >
         <Plus size={24} />
       </button>
 
-      <AddTransactionModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddTransactionModal
+        open={addOpen}
+        onClose={() => {
+          setAddOpen(false)
+          setEditingTransaction(null)
+        }}
+        initialTab={modalTab}
+        editingTransaction={editingTransaction}
+      />
     </div>
   )
 }
