@@ -129,7 +129,6 @@ export default function TransactionListScreen() {
   const [hasMore, setHasMore] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
   const [modalTab, setModalTab] = useState<TabType>('expense')
-  const [modalAllowTypeSwitch, setModalAllowTypeSwitch] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -219,11 +218,17 @@ export default function TransactionListScreen() {
   }, [visibleTransactions])
 
   const summary = useMemo(() => {
-    const safeSummary = summaryData as { income?: number; expenses?: number; balance?: number } | undefined
+    const safeSummary = summaryData as {
+      income?: number
+      expenses?: number
+      balance?: number
+      month_balance?: number
+    } | undefined
     return {
       income: Number(safeSummary?.income ?? 0),
       expenses: Number(safeSummary?.expenses ?? 0),
       balance: Number(safeSummary?.balance ?? 0),
+      monthBalance: Number(safeSummary?.month_balance ?? 0),
     }
   }, [summaryData])
 
@@ -245,25 +250,23 @@ export default function TransactionListScreen() {
     }
   }
 
-  const openCreateModal = (tab: TabType, allowTypeSwitch = false) => {
+  const openCreateModal = (tab: TabType) => {
     setEditingTransaction(null)
     setModalTab(tab)
-    setModalAllowTypeSwitch(allowTypeSwitch)
     setAddOpen(true)
   }
 
   const openEditModal = (tx: Transaction) => {
     setEditingTransaction(tx)
     setModalTab(tx.type as TabType)
-    setModalAllowTypeSwitch(false)
     setAddOpen(true)
   }
 
   const contextAction = useMemo(() => {
-    if (typeFilter === 'income') return { label: 'Nova receita', tab: 'income' as TabType, allowTypeSwitch: false }
-    if (typeFilter === 'transfer') return { label: 'Nova transferência', tab: 'transfer' as TabType, allowTypeSwitch: false }
-    if (typeFilter === 'expense') return { label: 'Novo gasto', tab: 'expense' as TabType, allowTypeSwitch: false }
-    return { label: 'Nova movimentação', tab: 'expense' as TabType, allowTypeSwitch: true }
+    if (typeFilter === 'income') return { label: 'Nova receita', tab: 'income' as TabType, disabled: false }
+    if (typeFilter === 'transfer') return { label: 'Nova transferência', tab: 'transfer' as TabType, disabled: false }
+    if (typeFilter === 'expense') return { label: 'Novo gasto', tab: 'expense' as TabType, disabled: false }
+    return { label: 'Escolha um contexto para lançar', tab: 'expense' as TabType, disabled: true }
   }, [typeFilter])
 
   const contextLabel = useMemo(() => {
@@ -295,9 +298,12 @@ export default function TransactionListScreen() {
               <p className="mt-1 text-sm font-bold tabular-nums">{formatCurrency(summary.expenses)}</p>
             </div>
             <div className="rounded-2xl border border-white/20 bg-white/10 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-violet-100">Saldo</p>
+              <p className="text-[11px] uppercase tracking-wide text-violet-100">Saldo acumulado</p>
               <p className={cn('mt-1 text-sm font-bold tabular-nums', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
                 {formatCurrency(summary.balance)}
+              </p>
+              <p className="mt-1 text-[10px] text-violet-100/85">
+                Mês: {formatCurrency(summary.monthBalance)}
               </p>
             </div>
           </div>
@@ -363,8 +369,17 @@ export default function TransactionListScreen() {
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{contextLabel}</p>
             <button
-              onClick={() => openCreateModal(contextAction.tab, contextAction.allowTypeSwitch)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100"
+              onClick={() => {
+                if (contextAction.disabled) return
+                openCreateModal(contextAction.tab)
+              }}
+              disabled={contextAction.disabled}
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                contextAction.disabled
+                  ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                  : 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
+              )}
             >
               <span className="text-sm leading-none">+</span>
               {contextAction.label}
@@ -600,11 +615,10 @@ export default function TransactionListScreen() {
         onClose={() => {
           setAddOpen(false)
           setEditingTransaction(null)
-          setModalAllowTypeSwitch(false)
         }}
         initialTab={modalTab}
         editingTransaction={editingTransaction}
-        allowTypeSwitch={modalAllowTypeSwitch}
+        allowTypeSwitch={false}
       />
     </div>
   )

@@ -128,6 +128,8 @@ router.get('/summary', async (req, res) => {
           income: 0,
           expenses: 0,
           balance: 0,
+          opening_balance: 0,
+          month_balance: 0,
           savings_rate: 0,
           daily_avg: 0,
           weekly_avg: 0,
@@ -156,10 +158,27 @@ router.get('/summary', async (req, res) => {
       [...accountIds, dateFrom, dateTo]
     )
 
+    const [openingRows] = await pool.query(
+      `SELECT COALESCE(SUM(
+          CASE
+            WHEN type = 'income' THEN amount
+            WHEN type = 'expense' THEN -amount
+            ELSE 0
+          END
+        ), 0) AS total
+       FROM transactions
+       WHERE account_id IN (${accountPlaceholders})
+         AND status = 'completed'
+         AND date < ? AND deleted_at IS NULL`,
+      [...accountIds, dateFrom]
+    )
+
     const income = parseFloat(incomeRows[0].total)
     const expenses = parseFloat(expenseRows[0].total)
-    const balance = income - expenses
-    const savings_rate = income > 0 ? ((balance / income) * 100).toFixed(1) : 0
+    const opening_balance = parseFloat(openingRows[0].total)
+    const month_balance = income - expenses
+    const balance = opening_balance + month_balance
+    const savings_rate = income > 0 ? ((month_balance / income) * 100).toFixed(1) : 0
 
     const daysInMonth = lastDay
     const today = now.getDate()
@@ -188,6 +207,8 @@ router.get('/summary', async (req, res) => {
         income,
         expenses,
         balance,
+        opening_balance: parseFloat(opening_balance.toFixed(2)),
+        month_balance: parseFloat(month_balance.toFixed(2)),
         savings_rate: parseFloat(savings_rate),
         daily_avg: parseFloat(daily_avg.toFixed(2)),
         weekly_avg: parseFloat(weekly_avg.toFixed(2)),
