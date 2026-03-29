@@ -1,12 +1,13 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  type LucideIcon,
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
   CalendarClock,
   Edit2,
   Filter,
-  Plus,
+  LayoutGrid,
   Search,
   Trash2,
   X,
@@ -24,11 +25,11 @@ type TypeFilter = 'all' | 'expense' | 'income' | 'transfer'
 
 const PAGE_SIZE = 20
 
-const TYPES: { value: TypeFilter; label: string }[] = [
-  { value: 'all', label: 'Todos' },
-  { value: 'expense', label: 'Gastos' },
-  { value: 'income', label: 'Receitas' },
-  { value: 'transfer', label: 'Transferências' },
+const SUBMENU_ITEMS: { value: TypeFilter; label: string; icon: LucideIcon }[] = [
+  { value: 'all', label: 'Geral', icon: LayoutGrid },
+  { value: 'expense', label: 'Gastos', icon: ArrowDownLeft },
+  { value: 'income', label: 'Receitas', icon: ArrowUpRight },
+  { value: 'transfer', label: 'Transferências', icon: ArrowLeftRight },
 ]
 
 function getTypeVisual(type: Transaction['type']) {
@@ -128,6 +129,7 @@ export default function TransactionListScreen() {
   const [hasMore, setHasMore] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
   const [modalTab, setModalTab] = useState<TabType>('expense')
+  const [modalAllowTypeSwitch, setModalAllowTypeSwitch] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -243,17 +245,33 @@ export default function TransactionListScreen() {
     }
   }
 
-  const openCreateModal = (tab: TabType) => {
+  const openCreateModal = (tab: TabType, allowTypeSwitch = false) => {
     setEditingTransaction(null)
     setModalTab(tab)
+    setModalAllowTypeSwitch(allowTypeSwitch)
     setAddOpen(true)
   }
 
   const openEditModal = (tx: Transaction) => {
     setEditingTransaction(tx)
     setModalTab(tx.type as TabType)
+    setModalAllowTypeSwitch(false)
     setAddOpen(true)
   }
+
+  const contextAction = useMemo(() => {
+    if (typeFilter === 'income') return { label: 'Nova receita', tab: 'income' as TabType, allowTypeSwitch: false }
+    if (typeFilter === 'transfer') return { label: 'Nova transferência', tab: 'transfer' as TabType, allowTypeSwitch: false }
+    if (typeFilter === 'expense') return { label: 'Novo gasto', tab: 'expense' as TabType, allowTypeSwitch: false }
+    return { label: 'Nova movimentação', tab: 'expense' as TabType, allowTypeSwitch: true }
+  }, [typeFilter])
+
+  const contextLabel = useMemo(() => {
+    if (typeFilter === 'income') return 'Contexto: receitas'
+    if (typeFilter === 'transfer') return 'Contexto: transferências'
+    if (typeFilter === 'expense') return 'Contexto: gastos'
+    return 'Contexto: geral'
+  }, [typeFilter])
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 lg:pb-6">
@@ -313,55 +331,43 @@ export default function TransactionListScreen() {
             )}
           </div>
 
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {TYPES.map(t => (
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {SUBMENU_ITEMS.map(item => {
+              const Icon = item.icon
+              const counter = item.value === 'all' ? loadedCounters.all : loadedCounters[item.value]
+              return (
               <button
-                key={t.value}
+                key={item.value}
                 onClick={() => {
-                  setTypeFilter(t.value)
+                  setTypeFilter(item.value)
                   setPage(1)
                 }}
                 className={cn(
-                  'flex flex-shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all',
-                  typeFilter === t.value
-                    ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                  'flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all',
+                  typeFilter === item.value
+                    ? 'border-violet-500 bg-violet-50 text-violet-800 shadow-sm'
                     : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50'
                 )}
               >
-                {t.label}
-                <span
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[10px]',
-                    typeFilter === t.value ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                  )}
-                >
-                  {t.value === 'all' ? loadedCounters.all : loadedCounters[t.value]}
+                <span className="flex items-center gap-1.5">
+                  <Icon size={14} />
+                  {item.label}
+                </span>
+                <span className={cn('rounded-full px-1.5 py-0.5 text-[10px]', typeFilter === item.value ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500')}>
+                  {counter}
                 </span>
               </button>
-            ))}
+            )})}
           </div>
 
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{contextLabel}</p>
             <button
-              onClick={() => openCreateModal('expense')}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+              onClick={() => openCreateModal(contextAction.tab, contextAction.allowTypeSwitch)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100"
             >
-              <ArrowDownLeft size={14} />
-              Novo gasto
-            </button>
-            <button
-              onClick={() => openCreateModal('income')}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
-            >
-              <ArrowUpRight size={14} />
-              Nova receita
-            </button>
-            <button
-              onClick={() => openCreateModal('transfer')}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100"
-            >
-              <ArrowLeftRight size={14} />
-              Nova transferência
+              <span className="text-sm leading-none">+</span>
+              {contextAction.label}
             </button>
           </div>
 
@@ -589,25 +595,17 @@ export default function TransactionListScreen() {
         )}
       </div>
 
-      <button
-        onClick={() => openCreateModal('expense')}
-        className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-lg transition-all hover:scale-[1.03] hover:from-violet-700 hover:to-purple-700 lg:bottom-6"
-        aria-label="Adicionar transação"
-      >
-        <Plus size={24} />
-      </button>
-
       <AddTransactionModal
         open={addOpen}
         onClose={() => {
           setAddOpen(false)
           setEditingTransaction(null)
+          setModalAllowTypeSwitch(false)
         }}
         initialTab={modalTab}
         editingTransaction={editingTransaction}
-        allowTypeSwitch={false}
+        allowTypeSwitch={modalAllowTypeSwitch}
       />
     </div>
   )
 }
-
