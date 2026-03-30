@@ -11,7 +11,7 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
 import { BrandWordmark } from '../../components/brand/Brand'
-import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
+import { buildApiUrl } from '../../lib/apiBase'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -26,10 +26,8 @@ export default function LoginScreen() {
   const { setUser } = useAuthStore()
   const [alert, setAlert] = useState<AlertState>(null)
 
-  const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const basePrefix = toBasePrefix(appBasePath)
-  const googleLoginUrl = `${basePrefix}/api/auth/google/start`
-  const heroImageSrc = `${basePrefix}/api/auth/media/login-01`
+  const googleLoginUrl = buildApiUrl('/api/auth/google/start')
+  const heroImageSrc = buildApiUrl('/api/auth/media/login-01')
 
   const {
     register,

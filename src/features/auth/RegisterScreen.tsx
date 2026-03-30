@@ -10,7 +10,7 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
 import { BrandWordmark } from '../../components/brand/Brand'
-import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
+import { buildApiUrl } from '../../lib/apiBase'
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '')
@@ -56,9 +56,7 @@ type AlertState = {
 export default function RegisterScreen() {
   const navigate = useNavigate()
   const [alert, setAlert] = useState<AlertState>(null)
-  const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const basePrefix = toBasePrefix(appBasePath)
-  const heroImageSrc = `${basePrefix}/api/auth/media/login-02`
+  const heroImageSrc = buildApiUrl('/api/auth/media/login-02')
 
   const {
     register,

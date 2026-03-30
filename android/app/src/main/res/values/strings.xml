@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SelfMoney</string>
+    <string name="title_activity_main">SelfMoney</string>
+    <string name="package_name">br.com.anacron.selfmoney</string>
+    <string name="custom_url_scheme">br.com.anacron.selfmoney</string>
+</resources>

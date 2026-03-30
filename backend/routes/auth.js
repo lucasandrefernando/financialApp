@@ -117,6 +117,17 @@ function getPublicAppUrl() {
   return appUrl || getAppBasePath()
 }
 
+function isLocalRuntimeOrigin(origin) {
+  if (!origin) return false
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin.trim())
+}
+
+function resolveRuntimeAppUrl(req) {
+  const origin = String(req?.headers?.origin || '').trim().replace(/\/+$/, '')
+  if (origin && !isLocalRuntimeOrigin(origin)) return origin
+  return getPublicAppUrl()
+}
+
 function getGoogleRedirectUri() {
   const explicit = (process.env.GOOGLE_REDIRECT_URI || '').trim()
   if (explicit) return explicit
@@ -238,7 +249,7 @@ router.post('/register', async (req, res) => {
       ]
     )
 
-    const appUrl = (req.headers.origin || process.env.APP_URL || getPublicAppUrl() || '').replace(/\/+$/, '')
+    const appUrl = resolveRuntimeAppUrl(req)
     await sendEmailVerificationEmail(email, verificationToken, appUrl, getAppBasePath())
 
     return res.status(201).json({
@@ -750,7 +761,7 @@ router.post('/forgot-password', async (req, res) => {
       [token, expiresAt, users[0].id]
     )
 
-    const appUrl = req.headers.origin || process.env.APP_URL || 'http://localhost:5173'
+    const appUrl = resolveRuntimeAppUrl(req) || 'http://localhost:5173'
     await sendPasswordResetEmail(email, token, appUrl)
 
     return res.json({ data: { message: 'Se o e-mail existir, você receberá um link em breve.' } })

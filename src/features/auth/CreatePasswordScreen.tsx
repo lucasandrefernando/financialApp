@@ -10,7 +10,7 @@ import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 import { getFirstFormErrorMessage } from './formError'
 import { BrandWordmark } from '../../components/brand/Brand'
-import { resolveAppBasePath, toBasePrefix } from '../../lib/basePath'
+import { buildApiUrl } from '../../lib/apiBase'
 
 const schema = z
   .object({
@@ -37,9 +37,7 @@ export default function CreatePasswordScreen() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const status = searchParams.get('status') || ''
-  const appBasePath = resolveAppBasePath(import.meta.env.VITE_APP_BASE_PATH)
-  const basePrefix = toBasePrefix(appBasePath)
-  const heroImageSrc = `${basePrefix}/api/auth/media/login-03`
+  const heroImageSrc = buildApiUrl('/api/auth/media/login-03')
 
   const [alert, setAlert] = useState<AlertState>(null)
 

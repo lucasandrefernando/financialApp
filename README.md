@@ -84,3 +84,54 @@ O workflow `.github/workflows/deploy.yml` faz:
 3. Commit automatico de `public/` na `main`
 
 Assim, a automacao Git->FTP da KingHost sempre recebe artefato pronto de execucao.
+
+## APK Android (Capacitor)
+
+Este projeto ja esta preparado para gerar APK Android usando Capacitor.
+
+### Pre-requisitos
+
+- Java JDK 17 (ou superior) instalado
+- `JAVA_HOME` configurado no Windows
+- Android Studio instalado (com Android SDK e Build Tools)
+
+### Comandos
+
+1. Instalar dependencias:
+
+```bash
+npm install
+```
+
+2. Gerar build web para Android (com API apontando para producao) e sincronizar:
+
+```bash
+npm run android:prepare
+```
+
+3. Abrir projeto Android no Android Studio:
+
+```bash
+npm run android:open
+```
+
+4. Gerar APK debug via terminal (opcional):
+
+```bash
+npm run android:apk:debug
+```
+
+O arquivo final fica em:
+
+`android/app/build/outputs/apk/debug/app-debug.apk`
+
+### Observacoes
+
+- O build Android usa, por padrao:
+  - `VITE_API_URL=https://anacron.com.br/financialApp`
+  - `VITE_APP_BASE_PATH=/`
+- Para trocar a API no APK, rode com variavel customizada:
+
+```bash
+$env:VITE_API_URL="https://seu-dominio.com/financialApp"; npm run android:prepare
+```
