@@ -125,7 +125,7 @@ export default function LoginScreen() {
 
           <div className="absolute inset-x-8 bottom-10">
             <h1 className="max-w-md text-4xl font-semibold leading-tight text-white">
-              Entre e acompanhe suas finanças com clareza.
+              Entre e acompanhe suas finanças com clareza e SABEDORIA.
             </h1>
             <p className="mt-3 max-w-sm text-sm text-white/85">
               Acesso rápido, seguro e sem complicação.
