@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTransactions, useDeleteTransaction, useTransactionsSummary } from '../../hooks/api/useTransactions'
+import { financialQueryOptions } from '../../hooks/api/financialSync'
 import { transactionsService } from '../../services/transactions'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, formatDate, formatMonth } from '../../utils/formatters'
@@ -243,6 +244,7 @@ export default function TransactionListScreen() {
         page: 1,
         limit: 10000,
       }),
+    ...financialQueryOptions,
   })
   const deleteTx = useDeleteTransaction()
 
@@ -436,7 +438,7 @@ export default function TransactionListScreen() {
   }, [typeFilter])
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 lg:pb-6">
+    <div className="mx-auto w-full max-w-4xl px-3 py-4 pb-24 sm:px-4 lg:px-6 lg:pb-6">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-violet-900 to-purple-800 px-5 py-5 text-white shadow-xl">
         <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-300/20 blur-md" />
         <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-purple-300/20 blur-md" />
@@ -447,18 +449,18 @@ export default function TransactionListScreen() {
             <h2 className="text-xl font-bold capitalize">{monthLabel}</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div className="order-2 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-1">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="order-2 min-w-0 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-1">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Receitas</p>
-              <p className="mt-1 text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.income)}</p>
+              <p className="mt-1 truncate text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.income)}</p>
             </div>
-            <div className="order-3 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-2">
+            <div className="order-3 min-w-0 rounded-2xl border border-white/20 bg-white/10 p-3 sm:order-2">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Gastos</p>
-              <p className="mt-1 text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.expenses)}</p>
+              <p className="mt-1 truncate text-base font-bold leading-tight tabular-nums sm:text-sm">{formatCurrency(summary.expenses)}</p>
             </div>
-            <div className="order-1 col-span-2 rounded-2xl border border-white/25 bg-white/15 p-3.5 sm:order-3 sm:col-span-1 sm:p-3">
+            <div className="order-1 min-w-0 rounded-2xl border border-white/25 bg-white/15 p-3.5 sm:order-3 sm:p-3">
               <p className="text-[11px] uppercase tracking-wide text-violet-100">Saldo acumulado</p>
-              <p className={cn('mt-1 text-xl font-bold leading-tight tabular-nums sm:text-sm', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
+              <p className={cn('mt-1 truncate text-xl font-bold leading-tight tabular-nums sm:text-sm', summary.balance >= 0 ? 'text-emerald-200' : 'text-rose-200')}>
                 {formatCurrency(summary.balance)}
               </p>
               <p className="mt-1 text-xs text-violet-100/90 sm:text-[10px]">
@@ -469,7 +471,7 @@ export default function TransactionListScreen() {
         </div>
       </div>
 
-      <div className="relative z-10 mt-4 -mx-3 bg-transparent px-3 pb-3 sm:-mx-4 sm:px-4">
+      <div className="relative z-10 mt-4 bg-transparent pb-3">
         <div className="rounded-2xl border border-slate-200/80 bg-white/95 px-3 py-3 shadow-sm backdrop-blur">
           <div className="relative">
             <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -480,7 +482,7 @@ export default function TransactionListScreen() {
                 setPage(1)
               }}
               placeholder="Buscar por descrição, categoria ou conta..."
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-[16px] text-slate-700 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
             {searchInput && (
               <button
@@ -496,7 +498,7 @@ export default function TransactionListScreen() {
             )}
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
             {SUBMENU_ITEMS.map(item => {
               const Icon = item.icon
               const counter = item.value === 'all' ? loadedCounters.all : loadedCounters[item.value]
@@ -508,15 +510,15 @@ export default function TransactionListScreen() {
                   setPage(1)
                 }}
                 className={cn(
-                  'flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs font-semibold transition-all',
+                  'flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition-all sm:px-3',
                   typeFilter === item.value
                     ? 'border-violet-500 bg-violet-50 text-violet-800 shadow-sm'
                     : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50'
                 )}
               >
-                <span className="flex items-center gap-1.5">
+                <span className="flex min-w-0 items-center gap-1.5">
                   <Icon size={14} />
-                  {item.label}
+                  <span className="truncate">{item.label}</span>
                 </span>
                 <span className={cn('rounded-full px-1.5 py-0.5 text-[10px]', typeFilter === item.value ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500')}>
                   {counter}
@@ -525,7 +527,7 @@ export default function TransactionListScreen() {
             )})}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-3 flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{contextLabel}</p>
             <button
               onClick={() => {
@@ -534,7 +536,7 @@ export default function TransactionListScreen() {
               }}
               disabled={contextAction.disabled}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                'inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                 contextAction.disabled
                   ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
                   : 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
@@ -557,7 +559,7 @@ export default function TransactionListScreen() {
                   if (dateTo && nextFrom && nextFrom > dateTo) setDateTo(nextFrom)
                   setPage(1)
                 }}
-                className="mt-1 w-full border-none bg-transparent p-0 text-sm font-medium text-slate-700 outline-none"
+                className="mt-1 w-full border-none bg-transparent p-0 text-[16px] font-medium text-slate-700 outline-none"
               />
             </label>
 
@@ -572,7 +574,7 @@ export default function TransactionListScreen() {
                   if (dateFrom && nextTo && nextTo < dateFrom) setDateFrom(nextTo)
                   setPage(1)
                 }}
-                className="mt-1 w-full border-none bg-transparent p-0 text-sm font-medium text-slate-700 outline-none"
+                className="mt-1 w-full border-none bg-transparent p-0 text-[16px] font-medium text-slate-700 outline-none"
               />
             </label>
 
@@ -583,7 +585,7 @@ export default function TransactionListScreen() {
                 setPage(1)
               }}
               className={cn(
-                'rounded-xl border px-3 py-2 text-xs font-semibold transition-colors',
+                'min-h-11 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors',
                 usingCustomDateRange
                   ? 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100'
                   : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
@@ -690,7 +692,7 @@ export default function TransactionListScreen() {
                     <div
                       key={tx.id}
                       onClick={() => openEditModal(tx)}
-                      className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-50/80"
+                      className="group flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors hover:bg-slate-50/80 sm:items-center sm:px-4"
                     >
                       <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', typeVisual.iconWrapClass)}>
                         <Icon size={17} />
@@ -711,18 +713,18 @@ export default function TransactionListScreen() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-shrink-0 flex-col-reverse items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             openEditModal(tx)
                           }}
-                          className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-violet-50 hover:text-violet-600"
+                          className="touch-target flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-violet-50 hover:text-violet-600 sm:min-h-0 sm:min-w-0"
                           aria-label={`Editar transação ${tx.description}`}
                         >
                           <Edit2 size={14} />
                         </button>
-                        <p className={cn('text-sm font-bold tabular-nums', typeVisual.amountClass)}>
+                        <p className={cn('max-w-[7.5rem] truncate text-right text-sm font-bold tabular-nums sm:max-w-none', typeVisual.amountClass)}>
                           {typeVisual.prefix}{formatCurrency(amountValue)}
                         </p>
                         <button
@@ -732,7 +734,7 @@ export default function TransactionListScreen() {
                           }}
                           disabled={deletingId === tx.id}
                           className={cn(
-                            'rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500',
+                            'touch-target flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 sm:min-h-0 sm:min-w-0',
                             'opacity-100 md:opacity-0 md:group-hover:opacity-100',
                             deletingId === tx.id && 'cursor-not-allowed opacity-50'
                           )}

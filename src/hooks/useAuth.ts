@@ -11,5 +11,5 @@ export function useAuthInit() {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
     }).finally(() => setLoading(false))
-  }, [])
+  }, [setLoading, setUser])
 }

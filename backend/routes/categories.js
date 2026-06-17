@@ -5,9 +5,44 @@ import { requireAuth } from '../middleware/auth.js'
 const router = Router()
 router.use(requireAuth)
 
+const DEFAULT_SYSTEM_CATEGORIES = [
+  { name: 'Pagamento de Contas', type: 'expense', color: '#0EA5E9', icon: 'receipt' },
+  { name: 'PIX', type: 'both', color: '#14B8A6', icon: 'qr-code' },
+]
+
+async function ensureSystemCategories() {
+  await Promise.all(
+    DEFAULT_SYSTEM_CATEGORIES.map(category =>
+      pool.query(
+        `INSERT INTO categories (user_id, name, type, color, icon, is_system)
+         SELECT NULL, ?, ?, ?, ?, TRUE
+         WHERE NOT EXISTS (
+           SELECT 1 FROM categories
+           WHERE user_id IS NULL AND name = ? AND deleted_at IS NULL
+         )`,
+        [
+          category.name,
+          category.type,
+          category.color,
+          category.icon,
+          category.name,
+        ]
+      )
+    )
+  )
+
+  await pool.query(
+    `UPDATE categories
+     SET type = 'both'
+     WHERE user_id IS NULL AND name = 'PIX' AND deleted_at IS NULL AND type <> 'both'`
+  )
+}
+
 // GET /api/categories
 router.get('/', async (req, res) => {
   try {
+    await ensureSystemCategories()
+
     const [rows] = await pool.query(
       `SELECT * FROM categories
        WHERE (user_id IS NULL OR user_id = ?) AND deleted_at IS NULL

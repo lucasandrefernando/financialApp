@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -47,8 +47,6 @@ export default function CompleteProfileScreen() {
   const { user, setUser } = useAuthStore()
   const [alert, setAlert] = useState<AlertState>(null)
 
-  if (!user) return <Navigate to="/login" replace />
-
   const {
     register,
     handleSubmit,
@@ -57,10 +55,12 @@ export default function CompleteProfileScreen() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: user.name || '',
-      cpf: user.cpf || '',
+      name: user?.name || '',
+      cpf: user?.cpf || '',
     },
   })
+
+  if (!user) return <Navigate to="/login" replace />
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -101,7 +101,7 @@ export default function CompleteProfileScreen() {
               placeholder="Seu nome completo"
               leftIcon={<UserRound size={16} />}
               autoComplete="name"
-              className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+              className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600"
               {...register('name')}
             />
 
@@ -110,7 +110,7 @@ export default function CompleteProfileScreen() {
               placeholder="000.000.000-00"
               leftIcon={<CreditCard size={16} />}
               inputMode="numeric"
-              className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+              className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600"
               {...register('cpf')}
               onChange={(e) => setValue('cpf', e.target.value, { shouldValidate: true })}
             />
@@ -139,3 +139,4 @@ export default function CompleteProfileScreen() {
     </div>
   )
 }
+

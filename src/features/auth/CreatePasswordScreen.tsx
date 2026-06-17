@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -165,7 +165,7 @@ export default function CreatePasswordScreen() {
                 placeholder="Mínimo de 6 caracteres"
                 leftIcon={<Lock size={16} />}
                 autoComplete="new-password"
-                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600"
                 {...register('password')}
               />
 
@@ -175,7 +175,7 @@ export default function CreatePasswordScreen() {
                 placeholder="Digite novamente sua senha"
                 leftIcon={<Lock size={16} />}
                 autoComplete="new-password"
-                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[15px] focus:ring-violet-600"
+                className="h-12 rounded-xl border-slate-300 bg-slate-50 text-[16px] focus:ring-violet-600"
                 {...register('confirmPassword')}
               />
 
@@ -213,3 +213,4 @@ export default function CreatePasswordScreen() {
     </div>
   )
 }
+

@@ -18,13 +18,13 @@ import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
+import { ColorPicker } from '../../components/ui/ColorPicker'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { AlertModal, type AlertTone } from '../../components/ui/AlertModal'
 import { toast } from '../../components/ui/Toast'
 import { cn } from '../../lib/utils'
+import { DEFAULT_ENTITY_COLOR } from '../../constants/entityColors'
 import type { Goal } from '../../types'
-
-const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC', '#D946EF', '#F0ABFC']
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Ativa' },
@@ -81,7 +81,7 @@ const defaultForm: GoalFormData = {
   monthly_contribution: '',
   deadline: '',
   icon: '🎯',
-  color: COLORS[0],
+  color: DEFAULT_ENTITY_COLOR,
   status: 'active',
 }
 
@@ -230,7 +230,7 @@ export default function GoalListScreen() {
         normalized.monthly_contribution == null ? '' : String(normalized.monthly_contribution),
       deadline: normalized.deadline ? String(normalized.deadline).split('T')[0] : '',
       icon: normalized.icon || '🎯',
-      color: normalized.color || COLORS[0],
+      color: normalized.color || DEFAULT_ENTITY_COLOR,
       status: normalized.status,
     })
     setModalOpen(true)
@@ -296,7 +296,7 @@ export default function GoalListScreen() {
       monthly_contribution: monthlyContribution,
       deadline: form.deadline || null,
       icon: form.icon || '🎯',
-      color: form.color || COLORS[0],
+      color: form.color || DEFAULT_ENTITY_COLOR,
       status: form.status,
       priority: 1,
     }
@@ -373,15 +373,15 @@ export default function GoalListScreen() {
         <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-300/20 blur-md" />
         <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-purple-300/20 blur-md" />
         <div className="relative">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.2em] text-violet-100/90">Planejamento</p>
               <h2 className="text-2xl font-bold">Metas financeiras</h2>
               <p className="mt-1 text-sm text-violet-100/90">
                 Organize objetivos e acompanhe sua evolução mês a mês.
               </p>
             </div>
-            <Button onClick={openCreate} leftIcon={<Plus size={16} />} className="h-10 rounded-xl bg-white text-violet-700 hover:bg-violet-50">
+            <Button onClick={openCreate} leftIcon={<Plus size={16} />} className="h-11 w-full rounded-xl bg-white text-violet-700 hover:bg-violet-50 sm:w-auto">
               Nova meta
             </Button>
           </div>
@@ -411,10 +411,10 @@ export default function GoalListScreen() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nome, descrição ou conta..."
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[16px] text-slate-700 outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {(['all', 'active', 'paused', 'completed', 'cancelled'] as StatusFilter[]).map(status => {
               const label =
                 status === 'all'
@@ -427,7 +427,7 @@ export default function GoalListScreen() {
                   key={status}
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                    'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                     statusFilter === status
                       ? 'border-violet-500 bg-violet-50 text-violet-700'
                       : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
@@ -473,7 +473,7 @@ export default function GoalListScreen() {
             const isCompleted = pct >= 100 || goal.status === 'completed'
             return (
               <Card key={goal.id} className="overflow-hidden border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 px-4 py-3" style={{ background: `linear-gradient(90deg, ${goal.color || COLORS[0]}, #6d28d9)` }}>
+                <div className="flex items-center gap-3 px-4 py-3" style={{ background: `linear-gradient(90deg, ${goal.color || DEFAULT_ENTITY_COLOR}, #6d28d9)` }}>
                   <span className="text-xl">{goal.icon || '🎯'}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-white">{goal.name}</p>
@@ -516,7 +516,7 @@ export default function GoalListScreen() {
 
                   <ProgressBar value={pct} max={100} showPercentage />
 
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                     <div className="rounded-xl bg-slate-50 px-3 py-2">
                       <p className="text-[11px] uppercase tracking-wide text-slate-500">Atual</p>
                       <p className="font-semibold tabular-nums text-slate-800">{formatCurrency(goal.current_amount)}</p>
@@ -570,7 +570,7 @@ export default function GoalListScreen() {
         title={editing ? 'Editar meta' : 'Nova meta'}
         size="lg"
         footer={
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button variant="outline" fullWidth onClick={resetModal}>
               Cancelar
             </Button>
@@ -592,7 +592,7 @@ export default function GoalListScreen() {
             <label className="mb-1.5 block text-sm font-medium text-gray-700">Descrição</label>
             <textarea
               rows={2}
-              className="w-full resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full resize-none rounded-xl border border-gray-300 px-3 py-2 text-[16px] focus:outline-none focus:ring-2 focus:ring-violet-500"
               value={form.description}
               onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
             />
@@ -655,24 +655,11 @@ export default function GoalListScreen() {
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Cor da meta</label>
-            <div className="flex flex-wrap gap-2">
-              {COLORS.map(color => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setForm(prev => ({ ...prev, color }))}
-                  className={cn(
-                    'h-7 w-7 rounded-full border-2 transition-transform',
-                    form.color === color ? 'scale-110 border-slate-800' : 'border-transparent'
-                  )}
-                  style={{ backgroundColor: color }}
-                  aria-label={`Selecionar cor ${color}`}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker
+            label="Cor da meta"
+            value={form.color}
+            onChange={color => setForm(prev => ({ ...prev, color }))}
+          />
         </div>
       </Modal>
 
@@ -682,7 +669,7 @@ export default function GoalListScreen() {
         title="Adicionar contribuição"
         size="sm"
         footer={
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button variant="outline" fullWidth onClick={() => setContribModal(null)}>
               Cancelar
             </Button>
@@ -715,7 +702,7 @@ export default function GoalListScreen() {
         title="Excluir meta"
         size="sm"
         footer={
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button variant="outline" fullWidth onClick={() => setDeleteModalGoal(null)}>
               Cancelar
             </Button>

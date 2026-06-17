@@ -11,9 +11,11 @@ import api from '../../lib/api'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
+import { ColorPicker } from '../../components/ui/ColorPicker'
 import { formatCurrency } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
 import { BrandWordmark } from '../../components/brand/Brand'
+import { DEFAULT_ENTITY_COLOR } from '../../constants/entityColors'
 
 // Step 1: Personal data
 const step1Schema = z.object({
@@ -43,7 +45,6 @@ interface IncomeDraft {
   account_idx: number
 }
 
-const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC']
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Conta Corrente' },
   { value: 'savings', label: 'Poupança' },
@@ -72,7 +73,7 @@ export default function OnboardingWizard() {
   const [error, setError] = useState('')
 
   // Account form state
-  const [accForm, setAccForm] = useState({ name: '', type: 'checking', bank_name: '', initial_balance: '', color: COLORS[0] })
+  const [accForm, setAccForm] = useState({ name: '', type: 'checking', bank_name: '', initial_balance: '', color: DEFAULT_ENTITY_COLOR })
   const [incForm, setIncForm] = useState({ name: '', type: 'salary', amount: '', day_of_month: '5', account_idx: '0' })
 
   const { register: r1, handleSubmit: h1, formState: { errors: e1 } } = useForm<Step1Data>({
@@ -95,7 +96,7 @@ export default function OnboardingWizard() {
       initial_balance: parseFloat(accForm.initial_balance) || 0,
       color: accForm.color,
     }])
-    setAccForm({ name: '', type: 'checking', bank_name: '', initial_balance: '', color: COLORS[0] })
+    setAccForm({ name: '', type: 'checking', bank_name: '', initial_balance: '', color: DEFAULT_ENTITY_COLOR })
   }
 
   const addIncome = () => {
@@ -251,20 +252,7 @@ export default function OnboardingWizard() {
                   value={accForm.initial_balance}
                   onChange={e => setAccForm(f => ({ ...f, initial_balance: e.target.value }))}
                 />
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Cor</label>
-                  <div className="flex gap-2">
-                    {COLORS.map(c => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setAccForm(f => ({ ...f, color: c }))}
-                        className={cn('w-7 h-7 rounded-full border-2 transition-transform', accForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent')}
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <ColorPicker value={accForm.color} onChange={color => setAccForm(f => ({ ...f, color }))} />
                 <Button variant="outline" onClick={addAccount} leftIcon={<Plus size={14} />} size="sm">
                   Adicionar conta
                 </Button>

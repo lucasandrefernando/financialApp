@@ -64,7 +64,7 @@ export function BrandWordmark({
 }
 
 export function BrandLockup({
-  iconSize: _iconSize = 'md',
+  iconSize = 'md',
   wordmarkSize = 'md',
   showSlogan = false,
   className,
@@ -75,9 +75,9 @@ export function BrandLockup({
   className?: string
 }) {
   return (
-    <div className={cn('inline-flex items-center', className)}>
+    <div className={cn('inline-flex items-center gap-2', className)}>
+      <BrandIcon size={iconSize} />
       <BrandWordmark size={wordmarkSize} showSlogan={showSlogan} />
     </div>
   )
 }
-

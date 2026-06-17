@@ -17,6 +17,7 @@ import dashboardRoutes from './backend/routes/dashboard.js'
 import sharingRoutes from './backend/routes/sharing.js'
 import insightRoutes from './backend/routes/insights.js'
 import onboardingRoutes from './backend/routes/onboarding.js'
+import syncRoutes from './backend/routes/sync.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
@@ -74,6 +75,7 @@ function mountApiRoutes(prefix = '') {
   app.use(`${routePrefix}/api/sharing`, sharingRoutes)
   app.use(`${routePrefix}/api/insights`, insightRoutes)
   app.use(`${routePrefix}/api/onboarding`, onboardingRoutes)
+  app.use(`${routePrefix}/api/sync`, syncRoutes)
 }
 
 function mountMediaRoutes(prefix = '') {

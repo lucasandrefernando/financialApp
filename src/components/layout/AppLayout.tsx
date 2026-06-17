@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { Header } from './Header'
+import { PullToRefresh } from './PullToRefresh'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -9,13 +10,13 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-[100dvh] min-w-0 overflow-hidden bg-gray-50 transition-colors dark:bg-slate-950">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <PullToRefresh>
           {children}
-        </main>
+        </PullToRefresh>
       </div>
       <BottomNav />
     </div>

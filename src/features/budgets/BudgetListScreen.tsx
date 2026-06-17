@@ -73,10 +73,10 @@ export default function BudgetListScreen() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto w-full max-w-2xl space-y-4 px-3 py-4 pb-24 sm:px-4 lg:px-6 lg:pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-gray-900">Orçamentos</h2>
-        <Button onClick={openCreate} leftIcon={<Plus size={16} />}>Novo orçamento</Button>
+        <Button onClick={openCreate} leftIcon={<Plus size={16} />} className="w-full sm:w-auto">Novo orçamento</Button>
       </div>
 
       {isLoading && (
@@ -104,19 +104,19 @@ export default function BudgetListScreen() {
         return (
           <Card key={b.id}>
             <div className="p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.category_color || '#6366f1' }} />
-                  <span className="text-sm font-semibold text-gray-900">{b.category_name || 'Categoria'}</span>
+                  <span className="min-w-0 truncate text-sm font-semibold text-gray-900">{b.category_name || 'Categoria'}</span>
                   <Badge color={PERIOD_COLORS[b.period] as any}>{PERIOD_LABELS[b.period]}</Badge>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(b)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(b.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
+                <div className="flex flex-shrink-0 gap-1">
+                  <button onClick={() => openEdit(b)} className="touch-target flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 sm:min-h-0 sm:min-w-0"><Edit2 size={14} /></button>
+                  <button onClick={() => handleDelete(b.id)} className="touch-target flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:min-h-0 sm:min-w-0"><Trash2 size={14} /></button>
                 </div>
               </div>
               <ProgressBar value={pct} max={100} showPercentage />
-              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+              <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between">
                 <span>{formatCurrency(b.spent ?? 0)} usado</span>
                 <span>de {formatCurrency(b.amount)}</span>
               </div>
@@ -135,7 +135,7 @@ export default function BudgetListScreen() {
         onClose={() => setModalOpen(false)}
         title={editing ? 'Editar orçamento' : 'Novo orçamento'}
         footer={
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button variant="outline" fullWidth onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button fullWidth loading={createBudget.isPending || updateBudget.isPending} onClick={handleSave}>
               {editing ? 'Salvar' : 'Criar'}

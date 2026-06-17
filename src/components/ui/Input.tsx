@@ -18,23 +18,23 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={id} className="text-sm font-medium text-gray-700">
+          <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-slate-200">
             {label}
           </label>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <span className="absolute left-3 text-gray-400 pointer-events-none">{leftIcon}</span>
+            <span className="pointer-events-none absolute left-3 text-gray-400 dark:text-slate-500">{leftIcon}</span>
           )}
           <input
             ref={ref}
             id={id}
             type={resolvedType}
             className={cn(
-              'w-full h-10 rounded-lg border bg-white text-gray-900',
-              'placeholder:text-gray-400 text-sm transition-colors duration-150',
+              'w-full h-10 rounded-lg border bg-white text-gray-900 dark:bg-slate-950 dark:text-slate-100',
+              'text-[16px] placeholder:text-gray-400 dark:placeholder:text-slate-500 transition-colors duration-150',
               'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent',
-              error ? 'border-red-400' : 'border-gray-300',
+              error ? 'border-red-400' : 'border-gray-300 dark:border-slate-700',
               leftIcon ? 'pl-10' : 'pl-3',
               (rightIcon || isPassword) ? 'pr-10' : 'pr-3',
               className
@@ -45,14 +45,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none dark:text-slate-500 dark:hover:text-slate-300"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           )}
           {rightIcon && !isPassword && (
-            <span className="absolute right-3 text-gray-400 pointer-events-none">{rightIcon}</span>
+            <span className="pointer-events-none absolute right-3 text-gray-400 dark:text-slate-500">{rightIcon}</span>
           )}
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}

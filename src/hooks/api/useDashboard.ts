@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAppStore } from '../../stores/appStore'
 import { dashboardService } from '../../services/dashboard'
+import { financialQueryOptions } from './financialSync'
 
 export function useDashboard() {
   const { selectedMonth } = useAppStore()
   return useQuery({
     queryKey: ['dashboard', selectedMonth],
     queryFn: () => dashboardService.get(selectedMonth.year, selectedMonth.month),
+    ...financialQueryOptions,
   })
 }
 

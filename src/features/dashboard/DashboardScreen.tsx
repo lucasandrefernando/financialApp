@@ -38,7 +38,7 @@ export default function DashboardScreen() {
   }))
 
   return (
-    <div className="p-4 pb-24 lg:pb-6 space-y-5 max-w-5xl mx-auto">
+    <div className="mx-auto w-full max-w-5xl space-y-5 px-3 py-4 pb-24 sm:px-4 lg:px-6 lg:pb-6">
 
       {/* Greeting */}
       <div className="pt-1">
@@ -65,7 +65,7 @@ export default function DashboardScreen() {
       </div>
 
       {/* Month cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
         <div className="min-w-0 bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
@@ -100,25 +100,25 @@ export default function DashboardScreen() {
       </div>
 
       {/* Averages + Projection */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="px-4 pt-4 pb-2">
           <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Médias de Gasto</p>
         </div>
-        <div className="grid grid-cols-3 divide-x divide-gray-100">
+        <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[
             { label: 'Diária', value: avg.daily },
             { label: 'Semanal', value: avg.weekly },
             { label: 'Quinzenal', value: avg.biweekly },
           ].map(item => (
-            <div key={item.label} className="p-4 text-center">
+            <div key={item.label} className="p-4 text-left sm:text-center">
               <p className="text-xs text-gray-400 mb-1">{item.label}</p>
               <p className="text-sm font-bold text-gray-900 tabular-nums">{formatCurrency(item.value)}</p>
             </div>
           ))}
         </div>
         {data?.projected_end_of_month !== undefined && (
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 border-t border-gray-100 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 min-w-0">
               <Calendar size={14} className="text-gray-400" />
               <span className="text-xs text-gray-500">Projeção até fim do mês</span>
             </div>
@@ -248,19 +248,19 @@ export default function DashboardScreen() {
 
       {/* AI Insights */}
       {Array.isArray(insights) && insights.length > 0 && (
-        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl border border-violet-100 p-4">
+        <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-purple-50 p-4 transition-colors dark:border-violet-400/20 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/35">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center shadow-sm dark:bg-yellow-300">
               <Lightbulb size={14} className="text-white" />
             </div>
-            <p className="text-sm font-semibold text-gray-900">Insights Financeiros</p>
-            <span className="ml-auto text-xs bg-violet-600 text-white px-2 py-0.5 rounded-full font-medium">IA</span>
+            <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">Insights Financeiros</p>
+            <span className="ml-auto rounded-full bg-violet-600 px-2 py-0.5 text-xs font-medium text-white dark:bg-violet-500/25 dark:text-violet-100">IA</span>
           </div>
           <div className="space-y-3">
             {insights.slice(0, 3).map((tip: any, i: number) => (
-              <div key={tip.id ?? i} className="bg-white rounded-xl p-3.5 shadow-sm">
-                <p className="text-sm font-semibold text-gray-900 mb-1">{tip.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{tip.message}</p>
+              <div key={tip.id ?? i} className="rounded-xl border border-transparent bg-white p-3.5 shadow-sm transition-colors dark:border-slate-700/80 dark:bg-slate-950/72 dark:shadow-none">
+                <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-slate-100">{tip.title}</p>
+                <p className="text-xs leading-relaxed text-gray-500 dark:text-slate-400">{tip.message}</p>
               </div>
             ))}
           </div>
@@ -270,7 +270,7 @@ export default function DashboardScreen() {
       {/* FAB */}
       <button
         onClick={() => setAddOpen(true)}
-        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full bg-violet-600 text-white shadow-xl flex items-center justify-center z-30 hover:bg-violet-700 active:scale-95 transition-all"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-xl transition-all hover:bg-violet-700 active:scale-95 lg:hidden"
         aria-label="Adicionar transação"
       >
         <Plus size={24} />
@@ -283,10 +283,10 @@ export default function DashboardScreen() {
 
 function DashboardSkeleton() {
   return (
-    <div className="p-4 space-y-5 max-w-5xl mx-auto animate-pulse">
+    <div className="mx-auto max-w-5xl space-y-5 p-4 animate-pulse">
       <div className="h-5 w-32 bg-gray-200 rounded" />
       <div className="h-32 bg-gray-200 rounded-2xl" />
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-gray-200 rounded-2xl" />)}
       </div>
       <div className="h-28 bg-gray-200 rounded-2xl" />

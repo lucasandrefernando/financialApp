@@ -1,8 +1,13 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
+import { useAppStore } from './stores/appStore'
 import { useAuthInit } from './hooks/useAuth'
+import { useIOSViewportReset } from './hooks/useIOSViewportReset'
+import { useFinancialPollingSync } from './hooks/api/useFinancialPollingSync'
 import AppLayout from './components/layout/AppLayout'
 import { ToastContainer } from './components/ui/Toast'
+import { AppLockGuard } from './components/security/AppLockGuard'
 import LoginScreen from './features/auth/LoginScreen'
 import GoogleAuthCallbackScreen from './features/auth/GoogleAuthCallbackScreen'
 import RegisterScreen from './features/auth/RegisterScreen'
@@ -34,7 +39,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!user) return <Navigate to="/login" replace />
   if (!user.cpf || !String(user.cpf).trim()) return <Navigate to="/complete-profile" replace />
   if (!user.onboarding_completed) return <Navigate to="/onboarding" replace />
-  return <>{children}</>
+  return <AppLockGuard>{children}</AppLockGuard>
 }
 
 function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
@@ -46,6 +51,15 @@ function AuthenticatedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   useAuthInit()
+  useIOSViewportReset()
+  useFinancialPollingSync()
+  const theme = useAppStore((state) => state.theme)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.documentElement.style.colorScheme = theme
+  }, [theme])
+
   return (
     <BrowserRouter basename={ROUTER_BASENAME}>
       <ToastContainer />

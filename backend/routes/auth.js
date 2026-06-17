@@ -4,6 +4,12 @@ import { randomBytes } from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import {
+  generateAuthenticationOptions,
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+  verifyRegistrationResponse,
+} from '@simplewebauthn/server'
 import pool from '../db.js'
 import {
   generateAccessToken,
@@ -17,6 +23,7 @@ const router = Router()
 const GOOGLE_OAUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo'
+const WEBAUTHN_RP_NAME = process.env.WEBAUTHN_RP_NAME || 'SelfMoney'
 let authSchemaReady = false
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '../..')
@@ -99,6 +106,36 @@ async function ensureAuthSchema() {
        AND deleted_at IS NULL`
   )
 
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS webauthn_credentials (
+       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+       user_id BIGINT UNSIGNED NOT NULL,
+       credential_id VARCHAR(512) NOT NULL UNIQUE,
+       public_key TEXT NOT NULL,
+       counter BIGINT UNSIGNED NOT NULL DEFAULT 0,
+       transports VARCHAR(255) NULL,
+       device_type VARCHAR(32) NULL,
+       backed_up TINYINT(1) NOT NULL DEFAULT 0,
+       label VARCHAR(120) NULL,
+       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       last_used_at DATETIME NULL,
+       INDEX idx_webauthn_credentials_user_id (user_id)
+     )`
+  )
+
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS webauthn_challenges (
+       id VARCHAR(64) NOT NULL PRIMARY KEY,
+       user_id BIGINT UNSIGNED NULL,
+       type ENUM('registration', 'authentication') NOT NULL,
+       challenge VARCHAR(512) NOT NULL,
+       expires_at DATETIME NOT NULL,
+       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       INDEX idx_webauthn_challenges_user_id (user_id),
+       INDEX idx_webauthn_challenges_expires_at (expires_at)
+     )`
+  )
+
   authSchemaReady = true
 }
 
@@ -115,6 +152,99 @@ function getAppBasePath() {
 function getPublicAppUrl() {
   const appUrl = (process.env.APP_URL || '').replace(/\/+$/, '')
   return appUrl || getAppBasePath()
+}
+
+function safeUrlOrigin(value) {
+  try {
+    if (!value) return ''
+    return new URL(value).origin
+  } catch {
+    return ''
+  }
+}
+
+function getRequestOrigin(req) {
+  const origin = String(req?.headers?.origin || '').trim()
+  if (origin) return origin.replace(/\/+$/, '')
+
+  const proto = String(req?.headers?.['x-forwarded-proto'] || req?.protocol || 'https').split(',')[0]
+  const host = String(req?.headers?.['x-forwarded-host'] || req?.headers?.host || '').split(',')[0]
+  if (!host) return safeUrlOrigin(getPublicAppUrl())
+  return `${proto}://${host}`.replace(/\/+$/, '')
+}
+
+function getExpectedOrigins(req) {
+  const origins = [
+    getRequestOrigin(req),
+    safeUrlOrigin(getPublicAppUrl()),
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:21149',
+    'http://127.0.0.1:21149',
+  ].filter(Boolean)
+  return [...new Set(origins)]
+}
+
+function getRpId(req) {
+  const explicit = String(process.env.WEBAUTHN_RP_ID || '').trim()
+  if (explicit) return explicit
+
+  const origin = getRequestOrigin(req) || getExpectedOrigins(req)[0]
+  try {
+    return new URL(origin).hostname
+  } catch {
+    return 'localhost'
+  }
+}
+
+function publicKeyToStorage(publicKey) {
+  return Buffer.from(publicKey).toString('base64url')
+}
+
+function publicKeyFromStorage(publicKey) {
+  return new Uint8Array(Buffer.from(publicKey, 'base64url'))
+}
+
+function parseTransports(value) {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+async function saveWebAuthnChallenge({ userId = null, type, challenge }) {
+  const challengeId = randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+  await pool.query('DELETE FROM webauthn_challenges WHERE expires_at < NOW()')
+  await pool.query(
+    `INSERT INTO webauthn_challenges (id, user_id, type, challenge, expires_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [challengeId, userId, type, challenge, expiresAt]
+  )
+  return challengeId
+}
+
+async function consumeWebAuthnChallenge({ challengeId, type }) {
+  const [rows] = await pool.query(
+    `SELECT * FROM webauthn_challenges
+     WHERE id = ? AND type = ? AND expires_at > NOW()`,
+    [challengeId, type]
+  )
+  await pool.query('DELETE FROM webauthn_challenges WHERE id = ?', [challengeId])
+  return rows[0] || null
+}
+
+async function getSafeUser(userId) {
+  const [safeUserRows] = await pool.query(
+    `SELECT id, name, cpf, email, email_verified, avatar_url, currency, locale, timezone,
+            onboarding_completed, created_at, updated_at
+     FROM users WHERE id = ? AND deleted_at IS NULL`,
+    [userId]
+  )
+  return safeUserRows[0] || null
 }
 
 function isLocalRuntimeOrigin(origin) {
@@ -317,6 +447,238 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('login error', err)
     return res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+})
+
+// GET /api/auth/passkeys/status
+router.get('/passkeys/status', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT COUNT(*) AS total FROM webauthn_credentials WHERE user_id = ?',
+      [req.userId]
+    )
+    return res.json({ data: { enabled: Number(rows[0]?.total || 0) > 0, count: Number(rows[0]?.total || 0) } })
+  } catch (err) {
+    console.error('passkeys status error', err)
+    return res.status(500).json({ error: 'Erro ao consultar passkeys' })
+  }
+})
+
+// POST /api/auth/passkeys/register/options
+router.post('/passkeys/register/options', requireAuth, async (req, res) => {
+  try {
+    const user = await getSafeUser(req.userId)
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' })
+
+    const [credentials] = await pool.query(
+      'SELECT credential_id, transports FROM webauthn_credentials WHERE user_id = ?',
+      [req.userId]
+    )
+
+    const options = await generateRegistrationOptions({
+      rpName: WEBAUTHN_RP_NAME,
+      rpID: getRpId(req),
+      userID: Buffer.from(`user:${user.id}`),
+      userName: user.email,
+      userDisplayName: user.name || user.email,
+      attestationType: 'none',
+      excludeCredentials: credentials.map(credential => ({
+        id: credential.credential_id,
+        transports: parseTransports(credential.transports),
+      })),
+      authenticatorSelection: {
+        residentKey: 'required',
+        requireResidentKey: true,
+        userVerification: 'required',
+      },
+      preferredAuthenticatorType: 'localDevice',
+    })
+
+    const challengeId = await saveWebAuthnChallenge({
+      userId: req.userId,
+      type: 'registration',
+      challenge: options.challenge,
+    })
+
+    return res.json({ data: { options, challenge_id: challengeId } })
+  } catch (err) {
+    console.error('passkeys register options error', err)
+    return res.status(500).json({ error: 'Erro ao iniciar cadastro da passkey' })
+  }
+})
+
+// POST /api/auth/passkeys/register/verify
+router.post('/passkeys/register/verify', requireAuth, async (req, res) => {
+  try {
+    const { challenge_id: challengeId, response, label } = req.body || {}
+    if (!challengeId || !response) {
+      return res.status(400).json({ error: 'Dados da passkey são obrigatórios' })
+    }
+
+    const challenge = await consumeWebAuthnChallenge({ challengeId, type: 'registration' })
+    if (!challenge || Number(challenge.user_id) !== Number(req.userId)) {
+      return res.status(400).json({ error: 'Desafio inválido ou expirado' })
+    }
+
+    const verification = await verifyRegistrationResponse({
+      response,
+      expectedChallenge: challenge.challenge,
+      expectedOrigin: getExpectedOrigins(req),
+      expectedRPID: getRpId(req),
+      requireUserVerification: true,
+    })
+
+    if (!verification.verified || !verification.registrationInfo) {
+      return res.status(400).json({ error: 'Não foi possível validar a passkey' })
+    }
+
+    const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo
+    await pool.query(
+      `INSERT INTO webauthn_credentials (
+         user_id, credential_id, public_key, counter, transports, device_type, backed_up, label
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         public_key = VALUES(public_key),
+         counter = VALUES(counter),
+         transports = VALUES(transports),
+         device_type = VALUES(device_type),
+         backed_up = VALUES(backed_up),
+         label = VALUES(label)`,
+      [
+        req.userId,
+        credential.id,
+        publicKeyToStorage(credential.publicKey),
+        credential.counter || 0,
+        JSON.stringify(credential.transports || response.response?.transports || []),
+        credentialDeviceType || null,
+        credentialBackedUp ? 1 : 0,
+        String(label || 'Este dispositivo').slice(0, 120),
+      ]
+    )
+
+    return res.json({ data: { enabled: true, message: 'Passkey ativada com sucesso.' } })
+  } catch (err) {
+    console.error('passkeys register verify error', err)
+    return res.status(500).json({ error: 'Erro ao finalizar cadastro da passkey' })
+  }
+})
+
+// POST /api/auth/passkeys/login/options
+router.post('/passkeys/login/options', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase()
+    let userId = null
+    let allowCredentials
+
+    if (email) {
+      const [users] = await pool.query(
+        'SELECT id FROM users WHERE email = ? AND email_verified = 1 AND deleted_at IS NULL',
+        [email]
+      )
+      if (users.length === 0) {
+        return res.status(404).json({ error: 'Nenhuma passkey encontrada para este e-mail' })
+      }
+      userId = users[0].id
+
+      const [credentials] = await pool.query(
+        'SELECT credential_id, transports FROM webauthn_credentials WHERE user_id = ?',
+        [userId]
+      )
+      if (credentials.length === 0) {
+        return res.status(404).json({ error: 'Nenhuma passkey encontrada para este e-mail' })
+      }
+
+      allowCredentials = credentials.map(credential => ({
+        id: credential.credential_id,
+        transports: parseTransports(credential.transports),
+      }))
+    }
+
+    const options = await generateAuthenticationOptions({
+      rpID: getRpId(req),
+      allowCredentials,
+      userVerification: 'required',
+    })
+
+    const challengeId = await saveWebAuthnChallenge({
+      userId,
+      type: 'authentication',
+      challenge: options.challenge,
+    })
+
+    return res.json({ data: { options, challenge_id: challengeId } })
+  } catch (err) {
+    console.error('passkeys login options error', err)
+    return res.status(500).json({ error: 'Erro ao iniciar login com passkey' })
+  }
+})
+
+// POST /api/auth/passkeys/login/verify
+router.post('/passkeys/login/verify', async (req, res) => {
+  try {
+    const { challenge_id: challengeId, response } = req.body || {}
+    if (!challengeId || !response?.id) {
+      return res.status(400).json({ error: 'Dados da passkey são obrigatórios' })
+    }
+
+    const challenge = await consumeWebAuthnChallenge({ challengeId, type: 'authentication' })
+    if (!challenge) {
+      return res.status(400).json({ error: 'Desafio inválido ou expirado' })
+    }
+
+    const [credentials] = await pool.query(
+      `SELECT wc.*, u.email_verified, u.deleted_at
+       FROM webauthn_credentials wc
+       JOIN users u ON u.id = wc.user_id
+       WHERE wc.credential_id = ?`,
+      [response.id]
+    )
+    const credentialRow = credentials[0]
+    if (!credentialRow || credentialRow.deleted_at || !credentialRow.email_verified) {
+      return res.status(401).json({ error: 'Passkey não encontrada ou usuário inválido' })
+    }
+    if (challenge.user_id && Number(challenge.user_id) !== Number(credentialRow.user_id)) {
+      return res.status(401).json({ error: 'Passkey não pertence a este usuário' })
+    }
+
+    const verification = await verifyAuthenticationResponse({
+      response,
+      expectedChallenge: challenge.challenge,
+      expectedOrigin: getExpectedOrigins(req),
+      expectedRPID: getRpId(req),
+      credential: {
+        id: credentialRow.credential_id,
+        publicKey: publicKeyFromStorage(credentialRow.public_key),
+        counter: Number(credentialRow.counter || 0),
+        transports: parseTransports(credentialRow.transports),
+      },
+      requireUserVerification: true,
+    })
+
+    if (!verification.verified) {
+      return res.status(401).json({ error: 'Não foi possível validar a passkey' })
+    }
+
+    await pool.query(
+      'UPDATE webauthn_credentials SET counter = ?, last_used_at = NOW() WHERE credential_id = ?',
+      [verification.authenticationInfo.newCounter || 0, credentialRow.credential_id]
+    )
+
+    const user = await getSafeUser(credentialRow.user_id)
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' })
+
+    const { accessToken, refreshToken } = await createSessionTokens(user.id)
+    return res.json({
+      data: {
+        user,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      },
+    })
+  } catch (err) {
+    console.error('passkeys login verify error', err)
+    return res.status(500).json({ error: 'Erro ao finalizar login com passkey' })
   }
 })
 
@@ -808,4 +1170,3 @@ router.post('/reset-password', async (req, res) => {
 })
 
 export default router
-

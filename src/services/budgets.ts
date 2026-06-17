@@ -1,10 +1,18 @@
 import api from '../lib/api'
+
+function withNoCacheParams(params?: Record<string, unknown>) {
+  return {
+    ...(params || {}),
+    _ts: Date.now(),
+  }
+}
+
 export const budgetsService = {
   list: async () => {
     const token = localStorage.getItem('access_token')
     if (!token) return []
     try {
-      return await api.get('/api/budgets').then(r => r.data)
+      return await api.get('/api/budgets', { params: withNoCacheParams() }).then(r => r.data)
     } catch (error: any) {
       if (error?.response?.status === 401) return []
       throw error

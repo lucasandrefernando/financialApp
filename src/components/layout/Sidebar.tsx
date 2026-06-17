@@ -38,10 +38,10 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      'hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0',
+      'hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 flex-shrink-0 dark:bg-slate-950 dark:border-slate-800',
       sidebarCollapsed ? 'w-16' : 'w-60'
     )}>
-      <div className="flex h-16 items-center justify-center border-b border-gray-100 px-3">
+      <div className="flex h-16 items-center justify-center border-b border-gray-100 px-3 dark:border-slate-800">
         {sidebarCollapsed ? (
           <BrandIcon size="sm" />
         ) : (
@@ -59,8 +59,8 @@ export function Sidebar() {
                 className={({ isActive }) => cn(
                   'flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-violet-50 text-violet-600'
-                    : 'text-gray-600 hover:bg-gray-100',
+                    ? 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-200'
+                    : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800',
                   sidebarCollapsed && 'justify-center px-0'
                 )}
                 title={sidebarCollapsed ? label : undefined}
@@ -73,14 +73,14 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="border-t border-gray-100 p-2">
+      <div className="border-t border-gray-100 p-2 dark:border-slate-800">
         <button
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
           className={cn(
             'flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
-            'text-rose-600 hover:bg-rose-50 disabled:opacity-60',
+            'text-rose-600 hover:bg-rose-50 disabled:opacity-60 dark:text-rose-300 dark:hover:bg-rose-500/10',
             sidebarCollapsed && 'justify-center px-0'
           )}
           title={sidebarCollapsed ? 'Sair' : undefined}

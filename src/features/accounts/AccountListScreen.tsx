@@ -8,12 +8,13 @@ import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
+import { ColorPicker } from '../../components/ui/ColorPicker'
 import { toast } from '../../components/ui/Toast'
 import SharingModal from './SharingModal'
 import { cn } from '../../lib/utils'
+import { DEFAULT_ENTITY_COLOR } from '../../constants/entityColors'
 import type { BankAccount } from '../../types'
 
-const COLORS = ['#6D28D9', '#7C3AED', '#9333EA', '#A855F7', '#C084FC', '#D946EF', '#F0ABFC']
 const ACCOUNT_TYPES = [
   { value: 'checking', label: 'Conta Corrente' },
   { value: 'savings', label: 'Poupança' },
@@ -36,7 +37,7 @@ interface AccountFormData {
   include_in_total: boolean
 }
 
-const defaultForm: AccountFormData = { name: '', type: 'checking', bank_name: '', initial_balance: '', color: COLORS[0], include_in_total: true }
+const defaultForm: AccountFormData = { name: '', type: 'checking', bank_name: '', initial_balance: '', color: DEFAULT_ENTITY_COLOR, include_in_total: true }
 
 export default function AccountListScreen() {
   const { data: accounts = [], isLoading } = useAccounts()
@@ -88,13 +89,13 @@ export default function AccountListScreen() {
     .reduce((sum: number, a: BankAccount) => sum + (a.current_balance || 0), 0)
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="mx-auto w-full max-w-2xl space-y-4 px-3 py-4 pb-24 sm:px-4 lg:px-6 lg:pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-gray-900">Contas</h2>
           <p className="text-sm text-gray-500">Total: {formatCurrency(totalBalance)}</p>
         </div>
-        <Button onClick={openCreate} leftIcon={<Plus size={16} />}>Nova conta</Button>
+        <Button onClick={openCreate} leftIcon={<Plus size={16} />} className="w-full sm:w-auto">Nova conta</Button>
       </div>
 
       {isLoading && (
@@ -121,11 +122,11 @@ export default function AccountListScreen() {
           <div className="flex items-stretch">
             {/* Color bar */}
             <div className="w-1.5 rounded-l-xl flex-shrink-0" style={{ backgroundColor: acc.color }} />
-            <div className="flex-1 p-4">
-              <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold text-gray-900">{acc.name}</h3>
+                    <h3 className="min-w-0 truncate text-base font-semibold text-gray-900">{acc.name}</h3>
                     <Badge color="gray">{TYPE_LABELS[acc.type] || acc.type}</Badge>
                     {acc.role && acc.role !== 'owner' && (
                       <Badge color={ROLE_COLORS[acc.role] as any}>{ROLE_LABELS[acc.role]}</Badge>
@@ -133,19 +134,19 @@ export default function AccountListScreen() {
                   </div>
                   {acc.bank_name && <p className="text-xs text-gray-500 mt-0.5">{acc.bank_name}</p>}
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(acc)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors" title="Editar">
+                <div className="flex flex-shrink-0 gap-1">
+                  <button onClick={() => openEdit(acc)} className="touch-target flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 sm:min-h-0 sm:min-w-0" title="Editar">
                     <Edit2 size={14} />
                   </button>
-                  <button onClick={() => setSharingAccount(acc)} className="p-1.5 text-gray-400 hover:text-violet-600 transition-colors" title="Compartilhar">
+                  <button onClick={() => setSharingAccount(acc)} className="touch-target flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-violet-50 hover:text-violet-600 sm:min-h-0 sm:min-w-0" title="Compartilhar">
                     <Share2 size={14} />
                   </button>
-                  <button onClick={() => handleDelete(acc.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors" title="Excluir">
+                  <button onClick={() => handleDelete(acc.id)} className="touch-target flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:min-h-0 sm:min-w-0" title="Excluir">
                     <Trash2 size={14} />
                   </button>
                 </div>
               </div>
-              <p className={cn('text-2xl font-bold mt-3 tabular-nums', acc.current_balance < 0 ? 'text-red-600' : 'text-gray-900')}>
+              <p className={cn('mt-3 truncate text-2xl font-bold tabular-nums', acc.current_balance < 0 ? 'text-red-600' : 'text-gray-900')}>
                 {formatCurrency(acc.current_balance || 0)}
               </p>
               {!acc.include_in_total && (
@@ -162,7 +163,7 @@ export default function AccountListScreen() {
         onClose={() => setModalOpen(false)}
         title={editing ? 'Editar conta' : 'Nova conta'}
         footer={
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button variant="outline" fullWidth onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button fullWidth loading={createAcc.isPending || updateAcc.isPending} onClick={handleSave}>
               {editing ? 'Salvar' : 'Criar'}
@@ -172,22 +173,12 @@ export default function AccountListScreen() {
       >
         <div className="space-y-4">
           <Input label="Nome" placeholder="Ex: Nubank" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Select label="Tipo" options={ACCOUNT_TYPES} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} />
             <Input label="Banco (opcional)" placeholder="Ex: Nubank" value={form.bank_name} onChange={e => setForm(f => ({ ...f, bank_name: e.target.value }))} />
           </div>
           <Input label="Saldo inicial" type="number" step="0.01" value={form.initial_balance} onChange={e => setForm(f => ({ ...f, initial_balance: e.target.value }))} />
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Cor</label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map(c => (
-                <button key={c} type="button" onClick={() => setForm(f => ({ ...f, color: c }))}
-                  className={cn('w-7 h-7 rounded-full border-2 transition-transform', form.color === c ? 'border-gray-700 scale-110' : 'border-transparent')}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker value={form.color} onChange={color => setForm(f => ({ ...f, color }))} />
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <label className="text-sm font-medium text-gray-700">Incluir no total</label>
             <button type="button" onClick={() => setForm(f => ({ ...f, include_in_total: !f.include_in_total }))}

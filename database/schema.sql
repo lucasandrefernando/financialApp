@@ -273,6 +273,8 @@ INSERT INTO categories (user_id, name, type, color, icon, is_system) VALUES
 (NULL, 'Lazer', 'expense', '#EC4899', 'gamepad', TRUE),
 (NULL, 'Roupas', 'expense', '#F59E0B', 'shopping-bag', TRUE),
 (NULL, 'Tecnologia', 'expense', '#6366F1', 'smartphone', TRUE),
+(NULL, 'Pagamento de Contas', 'expense', '#0EA5E9', 'receipt', TRUE),
+(NULL, 'PIX', 'both', '#14B8A6', 'qr-code', TRUE),
 (NULL, 'Assinaturas', 'expense', '#14B8A6', 'repeat', TRUE),
 (NULL, 'Serviços', 'expense', '#84CC16', 'tool', TRUE),
 (NULL, 'Impostos', 'expense', '#64748B', 'file-text', TRUE),
